@@ -5,9 +5,10 @@ import Network
 enum HostProbe {
     static func isReachable(_ host: String, port: UInt16 = 445, timeout: TimeInterval = 1.0) async -> Bool {
         await withCheckedContinuation { continuation in
+            guard let endpointPort = NWEndpoint.Port(rawValue: port) else { return continuation.resume(returning: false) }
             let connection = NWConnection(
                 host: NWEndpoint.Host(host),
-                port: NWEndpoint.Port(rawValue: port)!,
+                port: endpointPort,
                 using: .tcp
             )
 

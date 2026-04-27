@@ -11,10 +11,12 @@ final class NetworkWatcher {
             monitor.pathUpdateHandler = { path in
                 continuation.yield(path)
             }
-            continuation.onTermination = { [monitor] _ in
-                monitor.cancel()
+            continuation.onTermination = { [weak self] _ in
+                self?.monitor.cancel()
             }
             monitor.start(queue: queue)
+            // Yield current path immediately so consumers don't wait for first change
+            continuation.yield(monitor.currentPath)
         }
     }
 
