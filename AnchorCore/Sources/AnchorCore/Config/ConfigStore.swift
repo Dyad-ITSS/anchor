@@ -12,10 +12,13 @@ public enum ConfigStoreError: Error {
 
 /// Persists ``AnchorConfig`` to a JSON file in the App Group container.
 ///
-/// Use the ``init()`` convenience initialiser in production (requires App Group
+/// Use the ``init()`` designated initialiser in production (requires App Group
 /// entitlement). Inject an explicit ``fileURL`` in tests to avoid the entitlement
 /// dependency.
-public final class ConfigStore {
+///
+/// Declared as an `actor` so that concurrent reads/writes from AnchorApp and
+/// AnchorHelper are serialised without manual locking.
+public actor ConfigStore {
 
     // MARK: Properties
 
@@ -29,11 +32,14 @@ public final class ConfigStore {
     ///
     /// - Throws: ``ConfigStoreError/appGroupUnavailable`` when the container cannot
     ///   be resolved (e.g. entitlement missing or sandbox misconfigured).
-    public convenience init() throws {
+    public init() throws {
         guard let url = AppGroup.configFileURL else {
             throw ConfigStoreError.appGroupUnavailable
         }
-        self.init(fileURL: url)
+        self.fileURL = url
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        self.encoder = enc
     }
 
     /// Test-friendly initialiser — uses an explicit file URL.
@@ -41,9 +47,8 @@ public final class ConfigStore {
     /// - Parameter fileURL: Path where config will be read from / written to.
     public init(fileURL: URL) {
         self.fileURL = fileURL
-
         let enc = JSONEncoder()
-        enc.outputFormatting = .prettyPrinted
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
         self.encoder = enc
     }
 
@@ -57,7 +62,7 @@ public final class ConfigStore {
     /// - Returns: The decoded ``AnchorConfig``, or a default instance when no file exists.
     /// - Throws: Any `JSONDecoder` error encountered while decoding an existing file.
     public func load() throws -> AnchorConfig {
-        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+        guard (try? fileURL.checkResourceIsReachable()) == true else {
             return AnchorConfig()
         }
         let data = try Data(contentsOf: fileURL)

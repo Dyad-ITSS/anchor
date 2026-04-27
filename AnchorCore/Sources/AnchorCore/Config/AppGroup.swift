@@ -2,6 +2,7 @@ import Foundation
 
 /// App Group constants shared between the main app and the helper.
 public enum AppGroup {
+    // #warning("Replace group.com.yourname.anchor with your real App Group ID before provisioning")
     public static let id = "group.com.yourname.anchor"
 
     /// URL of the App Group container directory.

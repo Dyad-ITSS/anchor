@@ -17,7 +17,7 @@ struct ConfigStoreTests {
     // MARK: - Tests
 
     @Test("Save config with 1 share and load it back — displayName matches")
-    func testSaveAndLoad() throws {
+    func testSaveAndLoad() async throws {
         let url = tempFileURL()
         defer { try? FileManager.default.removeItem(at: url) }
 
@@ -25,20 +25,20 @@ struct ConfigStoreTests {
         let share = Share(displayName: "Home NAS", host: "192.168.1.10", shareName: "homes")
         let config = AnchorConfig(shares: [share])
 
-        try store.save(config)
-        let loaded = try store.load()
+        try await store.save(config)
+        let loaded = try await store.load()
 
         #expect(loaded.shares.count == 1)
         #expect(loaded.shares[0].displayName == "Home NAS")
     }
 
     @Test("Load from path with no file returns default AnchorConfig with empty shares")
-    func testLoadMissingFileReturnsDefault() throws {
+    func testLoadMissingFileReturnsDefault() async throws {
         let url = tempFileURL()
         // Do NOT create the file — store.load() should handle the missing-file case gracefully.
 
         let store = ConfigStore(fileURL: url)
-        let config = try store.load()
+        let config = try await store.load()
 
         #expect(config.shares.isEmpty)
         #expect(config.activeProfile == nil)
@@ -46,7 +46,7 @@ struct ConfigStoreTests {
     }
 
     @Test("Save config with 1 share, then save empty config — load returns empty shares")
-    func testSaveOverwrites() throws {
+    func testSaveOverwrites() async throws {
         let url = tempFileURL()
         defer { try? FileManager.default.removeItem(at: url) }
 
@@ -55,10 +55,10 @@ struct ConfigStoreTests {
         let configWithShare = AnchorConfig(shares: [share])
         let emptyConfig = AnchorConfig()
 
-        try store.save(configWithShare)
-        try store.save(emptyConfig)
+        try await store.save(configWithShare)
+        try await store.save(emptyConfig)
 
-        let loaded = try store.load()
+        let loaded = try await store.load()
         #expect(loaded.shares.isEmpty)
     }
 }
