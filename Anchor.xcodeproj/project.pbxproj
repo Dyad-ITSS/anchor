@@ -14,6 +14,7 @@
 		794B74A111C24C54A27C8365 /* MountSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD251D334FF4F12B7E49601 /* MountSession.swift */; };
 		B1C3A7F20E5D4A8F9C2E1D36 /* MountEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D9E4B30A1C2F5E8B7D6A90 /* MountEngine.swift */; };
 		D42815510978478626599232 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D324B5B779D43AFC221A3C52 /* main.swift */; };
+		E9F1A2B3C4D5E6F7A8B9C0D1 /* HelperApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* HelperApp.swift */; };
 		EA62517D798671B94AA459AE /* AnchorCore in Frameworks */ = {isa = PBXBuildFile; productRef = CA6FB21F5AD3F2DAAFEF9367 /* AnchorCore */; };
 		F3A8C52D1B7E4096D5F20C41 /* NetFS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9E5B61C3D0F2847C1A7E938 /* NetFS.framework */; };
 /* End PBXBuildFile section */
@@ -31,6 +32,7 @@
 		6017B4EFE3F025D2D2A03208 /* AnchorHelper.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AnchorHelper.entitlements; sourceTree = "<group>"; };
 		A127533E77F95E9CF4E9CB72 /* AnchorCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AnchorCore; path = AnchorCore; sourceTree = SOURCE_ROOT; };
 		C230642DE5E0A52D0C183312 /* AnchorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnchorApp.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* HelperApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperApp.swift; sourceTree = "<group>"; };
 		D324B5B779D43AFC221A3C52 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		DF771FF8B1900DE9A465CF9F /* Anchor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Anchor.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -108,6 +110,7 @@
 				6017B4EFE3F025D2D2A03208 /* AnchorHelper.entitlements */,
 				42FD13D8BD2FF33938AA114F /* Info.plist */,
 				D324B5B779D43AFC221A3C52 /* main.swift */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* HelperApp.swift */,
 				E48AB32C1B4C4B97ABAC7CD3 /* HostProbe.swift */,
 				281944B21EC24C30A989073F /* NetworkWatcher.swift */,
 				AAD251D334FF4F12B7E49601 /* MountSession.swift */,
@@ -213,6 +216,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D42815510978478626599232 /* main.swift in Sources */,
+				E9F1A2B3C4D5E6F7A8B9C0D1 /* HelperApp.swift in Sources */,
 				453F99F316114C40B3FC32D1 /* HostProbe.swift in Sources */,
 				2FE7FF0270814D22AC46AC75 /* NetworkWatcher.swift in Sources */,
 				794B74A111C24C54A27C8365 /* MountSession.swift in Sources */,
