@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		14FCCA690C6BE905460B308B /* AnchorCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0C1407AD50ED8EB4953E2538 /* AnchorCore */; };
 		22158D340045E1B2B37F0968 /* AnchorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C230642DE5E0A52D0C183312 /* AnchorApp.swift */; };
+		AA11BB22CC33DD44EE55FF66 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF60 /* StoreManager.swift */; };
+		BB22CC33DD44EE55FF66AA77 /* EntitlementManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB22CC33DD44EE55FF66AA70 /* EntitlementManager.swift */; };
+		CC33DD44EE55FF66AA77BB88 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = CC33DD44EE55FF66AA77BB80 /* RevenueCat */; };
 		A2B3C4D5E6F7A8B9C0D1E2F3 /* HelperManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* HelperManager.swift */; };
 		C3D4E5F6A7B8C9D0E1F2A3B4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F6A7B8C9D0E1F2A3B4C5 /* AppDelegate.swift */; };
 		E5F6A7B8C9D0E1F2A3B4C5D6 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6A7B8C9D0E1F2A3B4C5D6E7 /* MenuBarController.swift */; };
@@ -51,6 +54,8 @@
 		F2A3B4C5D6E7F8A9B0C1D2E3 /* ShareEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareEditSheet.swift; sourceTree = "<group>"; };
 		B4C5D6E7F8A9B0C1D2E3F4A5 /* ProfilesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilesTabView.swift; sourceTree = "<group>"; };
 		D6E7F8A9B0C1D2E3F4A5B6C7 /* AboutTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutTabView.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF60 /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
+		BB22CC33DD44EE55FF66AA70 /* EntitlementManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +73,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EA62517D798671B94AA459AE /* AnchorCore in Frameworks */,
+				CC33DD44EE55FF66AA77BB88 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,9 +106,19 @@
 				B2C3D4E5F6A7B8C9D0E1F2A3 /* HelperManager.swift */,
 				F6A7B8C9D0E1F2A3B4C5D6E7 /* MenuBarController.swift */,
 				E8F9A0B1C2D3E4F5A6B7C8D9 /* Views */,
+				DD11EE22FF33AA44BB55CC66 /* Store */,
 				5B2C4C2273CA4D2C70CC9687 /* Info.plist */,
 			);
 			path = AnchorApp;
+			sourceTree = "<group>";
+		};
+		DD11EE22FF33AA44BB55CC66 /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				AA11BB22CC33DD44EE55FF60 /* StoreManager.swift */,
+				BB22CC33DD44EE55FF66AA70 /* EntitlementManager.swift */,
+			);
+			path = Store;
 			sourceTree = "<group>";
 		};
 		E8F9A0B1C2D3E4F5A6B7C8D9 /* Views */ = {
@@ -187,6 +203,7 @@
 			name = Anchor;
 			packageProductDependencies = (
 				CA6FB21F5AD3F2DAAFEF9367 /* AnchorCore */,
+				CC33DD44EE55FF66AA77BB80 /* RevenueCat */,
 			);
 			productName = Anchor;
 			productReference = 067C4B964D6B6AD5DC23BD6C /* Anchor.app */;
@@ -222,6 +239,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				B0A4841680081DC6C39E7624 /* XCLocalSwiftPackageReference "AnchorCore" */,
+				DD22EE33FF44AA55BB66CC77 /* XCRemoteSwiftPackageReference "purchases-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6BAACBF8C38221CFEBA1BAC9 /* Products */;
@@ -248,6 +266,8 @@
 				E1F2A3B4C5D6E7F8A9B0C1D2 /* ShareEditSheet.swift in Sources */,
 				A3B4C5D6E7F8A9B0C1D2E3F4 /* ProfilesTabView.swift in Sources */,
 				C5D6E7F8A9B0C1D2E3F4A5B6 /* AboutTabView.swift in Sources */,
+				AA11BB22CC33DD44EE55FF66 /* StoreManager.swift in Sources */,
+				BB22CC33DD44EE55FF66AA77 /* EntitlementManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -499,6 +519,17 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		DD22EE33FF44AA55BB66CC77 /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = "5.0.0";
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		0C1407AD50ED8EB4953E2538 /* AnchorCore */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -507,6 +538,11 @@
 		CA6FB21F5AD3F2DAAFEF9367 /* AnchorCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AnchorCore;
+		};
+		CC33DD44EE55FF66AA77BB80 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DD22EE33FF44AA55BB66CC77 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCat;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
