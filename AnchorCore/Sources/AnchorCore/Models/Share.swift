@@ -1,8 +1,8 @@
 import Foundation
 
 /// A configured network share that Anchor can mount/unmount.
-public struct Share: Codable, Identifiable, Equatable {
-    public var id: UUID
+public struct Share: Codable, Identifiable, Equatable, Sendable {
+    public let id: UUID
     public var displayName: String
     public var host: String              // Primary (LAN) IP or hostname
     public var shareName: String
@@ -34,16 +34,18 @@ public struct Share: Codable, Identifiable, Equatable {
         self.profiles = profiles
     }
 
-    /// Returns the smb:// URL for the given host, URL-encoding spaces in shareName.
+    /// Returns the smb:// URL for the given host, URL-encoding the username and shareName.
     /// - With username: `smb://username@host/share`
     /// - Without: `smb://host/share`
     public func smbURL(host targetHost: String) -> URL? {
-        let encodedShare = shareName
-            .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? shareName
+        var componentSet = CharacterSet.urlPathAllowed
+        componentSet.remove("/")
+        let encodedShare = shareName.addingPercentEncoding(withAllowedCharacters: componentSet) ?? shareName
 
         var urlString: String
         if let user = username {
-            urlString = "smb://\(user)@\(targetHost)/\(encodedShare)"
+            let encodedUser = user.addingPercentEncoding(withAllowedCharacters: .urlUserAllowed) ?? user
+            urlString = "smb://\(encodedUser)@\(targetHost)/\(encodedShare)"
         } else {
             urlString = "smb://\(targetHost)/\(encodedShare)"
         }

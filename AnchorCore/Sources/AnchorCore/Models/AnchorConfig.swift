@@ -1,7 +1,7 @@
 import Foundation
 
 /// Top-level configuration stored in the App Group container.
-public struct AnchorConfig: Codable {
+public struct AnchorConfig: Codable, Equatable, Sendable {
     public var shares: [Share]
     public var activeProfile: String?
     public var schemaVersion: Int

@@ -1,7 +1,7 @@
 import Foundation
 
 /// The mount status of a single share.
-public enum MountState: String, Codable, Equatable {
+public enum MountState: String, Codable, Equatable, Sendable {
     case mounted
     case unmounted
     case unreachable
@@ -10,7 +10,7 @@ public enum MountState: String, Codable, Equatable {
 }
 
 /// An event emitted when a share's mount state changes.
-public struct MountEvent: Codable {
+public struct MountEvent: Codable, Equatable, Sendable {
     public let shareID: UUID
     public let state: MountState
     /// Which host was used — primary or fallback.

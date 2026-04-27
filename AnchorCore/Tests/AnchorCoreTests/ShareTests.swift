@@ -89,4 +89,10 @@ struct ShareTests {
         let url = share.smbURL(host: "10.0.4.1")
         #expect(url?.absoluteString == "smb://10.0.4.1/Dyad%20Capital")
     }
+
+    @Test("smbURL uses supplied host instead of share.host (fallback path)")
+    func testSMBURLWithFallbackHost() {
+        let s = Share(displayName: "NAS", host: "192.168.0.99", shareName: "data")
+        #expect(s.smbURL(host: "100.64.93.215") == URL(string: "smb://100.64.93.215/data"))
+    }
 }
