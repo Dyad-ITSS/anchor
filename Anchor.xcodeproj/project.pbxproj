@@ -1,0 +1,442 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		14FCCA690C6BE905460B308B /* AnchorCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0C1407AD50ED8EB4953E2538 /* AnchorCore */; };
+		22158D340045E1B2B37F0968 /* AnchorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C230642DE5E0A52D0C183312 /* AnchorApp.swift */; };
+		D42815510978478626599232 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D324B5B779D43AFC221A3C52 /* main.swift */; };
+		EA62517D798671B94AA459AE /* AnchorCore in Frameworks */ = {isa = PBXBuildFile; productRef = CA6FB21F5AD3F2DAAFEF9367 /* AnchorCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		067C4B964D6B6AD5DC23BD6C /* Anchor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Anchor.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0C5AD50A00B879C33DF25814 /* AnchorHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = AnchorHelper; sourceTree = BUILT_PRODUCTS_DIR; };
+		42FD13D8BD2FF33938AA114F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5B2C4C2273CA4D2C70CC9687 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6017B4EFE3F025D2D2A03208 /* AnchorHelper.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AnchorHelper.entitlements; sourceTree = "<group>"; };
+		A127533E77F95E9CF4E9CB72 /* AnchorCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AnchorCore; path = AnchorCore; sourceTree = SOURCE_ROOT; };
+		C230642DE5E0A52D0C183312 /* AnchorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnchorApp.swift; sourceTree = "<group>"; };
+		D324B5B779D43AFC221A3C52 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		DF771FF8B1900DE9A465CF9F /* Anchor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Anchor.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		597889A46BF97B37B05BB116 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				14FCCA690C6BE905460B308B /* AnchorCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7EF3C5F134CBC62C73E83A40 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EA62517D798671B94AA459AE /* AnchorCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		6BAACBF8C38221CFEBA1BAC9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				067C4B964D6B6AD5DC23BD6C /* Anchor.app */,
+				0C5AD50A00B879C33DF25814 /* AnchorHelper */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6F38AC6CB09BE226842E13E2 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				A127533E77F95E9CF4E9CB72 /* AnchorCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		8E4D1B3E0D05F22594B317EE /* AnchorApp */ = {
+			isa = PBXGroup;
+			children = (
+				DF771FF8B1900DE9A465CF9F /* Anchor.entitlements */,
+				C230642DE5E0A52D0C183312 /* AnchorApp.swift */,
+				5B2C4C2273CA4D2C70CC9687 /* Info.plist */,
+			);
+			path = AnchorApp;
+			sourceTree = "<group>";
+		};
+		B551F1D57E379A2C3E868ADB = {
+			isa = PBXGroup;
+			children = (
+				8E4D1B3E0D05F22594B317EE /* AnchorApp */,
+				C42BA502EFCE867C5AFC7C8A /* AnchorHelper */,
+				6F38AC6CB09BE226842E13E2 /* Packages */,
+				6BAACBF8C38221CFEBA1BAC9 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C42BA502EFCE867C5AFC7C8A /* AnchorHelper */ = {
+			isa = PBXGroup;
+			children = (
+				6017B4EFE3F025D2D2A03208 /* AnchorHelper.entitlements */,
+				42FD13D8BD2FF33938AA114F /* Info.plist */,
+				D324B5B779D43AFC221A3C52 /* main.swift */,
+			);
+			path = AnchorHelper;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		33867BE438319C4DBD88FA46 /* AnchorHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 582A4042E1FAECA063529011 /* Build configuration list for PBXNativeTarget "AnchorHelper" */;
+			buildPhases = (
+				89F9BAC5C39E671856DA1F1E /* Sources */,
+				597889A46BF97B37B05BB116 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AnchorHelper;
+			packageProductDependencies = (
+				0C1407AD50ED8EB4953E2538 /* AnchorCore */,
+			);
+			productName = AnchorHelper;
+			productReference = 0C5AD50A00B879C33DF25814 /* AnchorHelper */;
+			productType = "com.apple.product-type.tool";
+		};
+		6F5D2FC464FFAA1DA15E11C1 /* Anchor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A3340A0BCD8AA8B00BE46C6 /* Build configuration list for PBXNativeTarget "Anchor" */;
+			buildPhases = (
+				63D364B80E211DB48EB26372 /* Sources */,
+				7EF3C5F134CBC62C73E83A40 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Anchor;
+			packageProductDependencies = (
+				CA6FB21F5AD3F2DAAFEF9367 /* AnchorCore */,
+			);
+			productName = Anchor;
+			productReference = 067C4B964D6B6AD5DC23BD6C /* Anchor.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		15909A3D28DD6BEEA0C2B50B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					33867BE438319C4DBD88FA46 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					6F5D2FC464FFAA1DA15E11C1 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = A1E223698874A7CA495056A9 /* Build configuration list for PBXProject "Anchor" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = B551F1D57E379A2C3E868ADB;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B0A4841680081DC6C39E7624 /* XCLocalSwiftPackageReference "AnchorCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6BAACBF8C38221CFEBA1BAC9 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6F5D2FC464FFAA1DA15E11C1 /* Anchor */,
+				33867BE438319C4DBD88FA46 /* AnchorHelper */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		63D364B80E211DB48EB26372 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22158D340045E1B2B37F0968 /* AnchorApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		89F9BAC5C39E671856DA1F1E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D42815510978478626599232 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2EC9BA45EE13B165262DE80A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AnchorHelper/AnchorHelper.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = AnchorHelper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.anchor.AnchorHelper;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		82220C11074D810A0ACD9AC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = AnchorApp/Anchor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = AnchorApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.anchor;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D7B93F0B205688DB34CFE261 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		EBF4850DDBEFA086ECED5CA1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		F011459FAF33E2627EEA4F69 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AnchorHelper/AnchorHelper.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = AnchorHelper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.anchor.AnchorHelper;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		F12EB7555C8024417283D842 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = AnchorApp/Anchor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = AnchorApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.anchor;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		582A4042E1FAECA063529011 /* Build configuration list for PBXNativeTarget "AnchorHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2EC9BA45EE13B165262DE80A /* Debug */,
+				F011459FAF33E2627EEA4F69 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9A3340A0BCD8AA8B00BE46C6 /* Build configuration list for PBXNativeTarget "Anchor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F12EB7555C8024417283D842 /* Debug */,
+				82220C11074D810A0ACD9AC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A1E223698874A7CA495056A9 /* Build configuration list for PBXProject "Anchor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EBF4850DDBEFA086ECED5CA1 /* Debug */,
+				D7B93F0B205688DB34CFE261 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B0A4841680081DC6C39E7624 /* XCLocalSwiftPackageReference "AnchorCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = AnchorCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0C1407AD50ED8EB4953E2538 /* AnchorCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AnchorCore;
+		};
+		CA6FB21F5AD3F2DAAFEF9367 /* AnchorCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AnchorCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 15909A3D28DD6BEEA0C2B50B /* Project object */;
+}

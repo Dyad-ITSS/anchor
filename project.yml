@@ -1,0 +1,77 @@
+name: Anchor
+options:
+  bundleIdPrefix: com.yourname
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15"
+  createIntermediateGroups: true
+
+packages:
+  AnchorCore:
+    path: AnchorCore
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+
+targets:
+  Anchor:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: AnchorApp
+    info:
+      path: AnchorApp/Info.plist
+      properties:
+        CFBundleName: Anchor
+        CFBundleDisplayName: Anchor
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        LSUIElement: true
+        NSPrincipalClass: NSApplication
+    entitlements:
+      path: AnchorApp/Anchor.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-write: true
+        com.apple.application-identifier: $(AppIdentifierPrefix)com.yourname.anchor
+        com.apple.security.application-groups:
+          - group.com.yourname.anchor
+    dependencies:
+      - package: AnchorCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yourname.anchor
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+
+  AnchorHelper:
+    type: tool
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: AnchorHelper
+    info:
+      path: AnchorHelper/Info.plist
+      properties:
+        CFBundleName: AnchorHelper
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+    entitlements:
+      path: AnchorHelper/AnchorHelper.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.application-identifier: $(AppIdentifierPrefix)com.yourname.anchor.AnchorHelper
+        com.apple.security.application-groups:
+          - group.com.yourname.anchor
+    dependencies:
+      - package: AnchorCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yourname.anchor.AnchorHelper
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
