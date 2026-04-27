@@ -18,7 +18,7 @@ final class MountEngine {
     // MARK: - Per-share logic
 
     private func processShare(_ share: Share, isPro: Bool) async {
-        let currentState = session.state(for: share.id)
+        let currentState = await session.state(for: share.id)
 
         switch currentState {
         case .mounted:
@@ -37,6 +37,9 @@ final class MountEngine {
             }
             if share.unmountWhenUnreachable {
                 await unmount(share)
+            } else {
+                await session.setState(.unreachable, for: share.id)
+                MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .unreachable))
             }
 
         case .unmounted, .unreachable, .error:
@@ -53,7 +56,7 @@ final class MountEngine {
                 }
             }
             // Neither host is reachable.
-            session.setState(.unreachable, for: share.id)
+            await session.setState(.unreachable, for: share.id)
             MountNotifications.postStateChanged(
                 MountEvent(shareID: share.id, state: .unreachable)
             )
@@ -75,26 +78,28 @@ final class MountEngine {
 
     private func mount(_ share: Share, usingHost host: String) async {
         guard let url = share.smbURL(host: host) else { return }
-        session.setState(.mounting, for: share.id)
+        await session.setState(.mounting, for: share.id)
         MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .mounting))
 
         let result = await withCheckedContinuation { (continuation: CheckedContinuation<Int32, Never>) in
-            var mountPoints: Unmanaged<CFArray>?
-            let rc = NetFSMountURLSync(
-                url as CFURL,
-                nil,   // mountPath — nil = /Volumes
-                nil,   // user — nil = use Keychain
-                nil,   // password — nil = use Keychain
-                nil,   // open options
-                nil,   // mount options
-                &mountPoints
-            )
-            mountPoints?.release()
-            continuation.resume(returning: rc)
+            DispatchQueue.global(qos: .utility).async {
+                var mountPoints: Unmanaged<CFArray>?
+                let rc = NetFSMountURLSync(
+                    url as CFURL,
+                    nil,   // mountPath — nil = /Volumes
+                    nil,   // user — nil = use Keychain
+                    nil,   // password — nil = use Keychain
+                    nil,   // open options
+                    nil,   // mount options
+                    &mountPoints
+                )
+                mountPoints?.release()
+                continuation.resume(returning: rc)
+            }
         }
 
         let newState: MountState = (result == 0) ? .mounted : .error
-        session.setState(newState, for: share.id)
+        await session.setState(newState, for: share.id)
         MountNotifications.postStateChanged(
             MountEvent(
                 shareID: share.id,
@@ -109,15 +114,21 @@ final class MountEngine {
     private func unmount(_ share: Share) async {
         let volumePath = "/Volumes/\(share.shareName)"
         guard FileManager.default.fileExists(atPath: volumePath) else {
-            session.setState(.unmounted, for: share.id)
+            await session.setState(.unmounted, for: share.id)
             return
         }
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
         task.arguments = ["unmount", "force", volumePath]
-        try? task.run()
-        task.waitUntilExit()
-        session.setState(.unmounted, for: share.id)
-        MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .unmounted))
+        do {
+            try task.run()
+            task.waitUntilExit()
+            let newState: MountState = task.terminationStatus == 0 ? .unmounted : .error
+            await session.setState(newState, for: share.id)
+            MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: newState))
+        } catch {
+            await session.setState(.error, for: share.id)
+            MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .error))
+        }
     }
 }

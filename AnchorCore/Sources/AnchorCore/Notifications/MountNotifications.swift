@@ -1,6 +1,7 @@
 import Foundation
 
 public enum MountNotifications {
+    // TODO: Replace com.yourname.anchor with the real bundle ID before shipping
     /// Posted by AnchorHelper when any share's MountState changes.
     public static let stateChanged = "com.yourname.anchor.mountStateChanged"
 
