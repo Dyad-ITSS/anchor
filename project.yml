@@ -9,6 +9,9 @@ options:
 packages:
   AnchorCore:
     path: AnchorCore
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios
+    from: 5.0.0
 
 settings:
   base:
@@ -42,6 +45,8 @@ targets:
           - group.com.yourname.anchor
     dependencies:
       - package: AnchorCore
+      - package: RevenueCat
+        product: RevenueCat
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.yourname.anchor
@@ -70,6 +75,7 @@ targets:
           - group.com.yourname.anchor
     dependencies:
       - package: AnchorCore
+      - sdk: NetFS.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.yourname.anchor.AnchorHelper

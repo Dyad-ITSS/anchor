@@ -12,6 +12,20 @@ final class MenuBarController {
         observeStateChanges()
         updateIcon()
         buildMenu()
+        // Use explicit click handler — more reliable than statusItem.menu on unsigned builds
+        statusItem.button?.action = #selector(statusButtonClicked(_:))
+        statusItem.button?.target = self
+        statusItem.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
+    }
+
+    @objc private func statusButtonClicked(_ sender: NSStatusBarButton) {
+        guard let menu = statusItem.menu else { return }
+        // Detach menu briefly so button click doesn't fight with menu display
+        statusItem.menu = nil
+        menu.popUp(positioning: nil,
+                   at: NSPoint(x: 0, y: sender.bounds.height + 4),
+                   in: sender)
+        statusItem.menu = menu
     }
 
     private func updateIcon() {
@@ -19,21 +33,21 @@ final class MenuBarController {
         let allMounted = !activeShares.isEmpty && activeShares.allSatisfy { shareStates[$0.id] == .mounted }
         let anyMounted = activeShares.contains { shareStates[$0.id] == .mounted }
 
-        let tint: NSColor
-        if activeShares.isEmpty {
-            tint = .secondaryLabelColor
-        } else if allMounted {
-            tint = .controlAccentColor
-        } else if anyMounted {
-            tint = .systemYellow
-        } else {
-            tint = .systemRed
-        }
-
         let image = NSImage(systemSymbolName: "externaldrive.connected.to.line.below", accessibilityDescription: "Anchor")
-        image?.isTemplate = false
+        image?.isTemplate = true
         statusItem.button?.image = image
-        statusItem.button?.contentTintColor = tint
+
+        // nil tint = system adapts automatically (white on dark, black on light)
+        // coloured tint = status override
+        if activeShares.isEmpty {
+            statusItem.button?.contentTintColor = nil
+        } else if allMounted {
+            statusItem.button?.contentTintColor = .controlAccentColor
+        } else if anyMounted {
+            statusItem.button?.contentTintColor = .systemYellow
+        } else {
+            statusItem.button?.contentTintColor = .systemRed
+        }
     }
 
     func buildMenu() {
@@ -54,14 +68,16 @@ final class MenuBarController {
         menu.addItem(.separator())
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         menu.addItem(NSMenuItem(title: "Anchor \(version)", action: nil, keyEquivalent: ""))
+        menu.addItem(.separator())
+        let quit = NSMenuItem(title: "Quit Anchor", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quit)
         statusItem.menu = menu
     }
 
     @objc private func reconnectAll() { MountNotifications.postConfigUpdated() }
 
     @objc private func openSettings() {
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        NSApp.activate(ignoringOtherApps: true)
+        SettingsWindowController.shared.show()
     }
 
     private func loadConfig() {
