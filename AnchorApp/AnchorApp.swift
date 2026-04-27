@@ -6,7 +6,7 @@ struct AnchorApp: App {
 
     var body: some Scene {
         Settings {
-            Text("Settings") // placeholder — replaced in Task 12
+            SettingsView()
         }
     }
 }
