@@ -36,6 +36,7 @@ final class HelperApp {
     private func reloadAndMount() async {
         do {
             isPro = ProKeychain.isProUnlocked()
+            _ = VPNDetector.detect()  // writes detected VPN to shared UserDefaults
             let config = try await configStore.load()
             await mountEngine.processShares(config, isPro: isPro)
         } catch {

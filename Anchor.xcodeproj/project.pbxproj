@@ -25,6 +25,7 @@
 		794B74A111C24C54A27C8365 /* MountSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD251D334FF4F12B7E49601 /* MountSession.swift */; };
 		B1C3A7F20E5D4A8F9C2E1D36 /* MountEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D9E4B30A1C2F5E8B7D6A90 /* MountEngine.swift */; };
 		D42815510978478626599232 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D324B5B779D43AFC221A3C52 /* main.swift */; };
+		FF00112233445566778899AA /* VPNDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00112233445566778899AB /* VPNDetector.swift */; };
 		E9F1A2B3C4D5E6F7A8B9C0D1 /* HelperApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* HelperApp.swift */; };
 		EA62517D798671B94AA459AE /* AnchorCore in Frameworks */ = {isa = PBXBuildFile; productRef = CA6FB21F5AD3F2DAAFEF9367 /* AnchorCore */; };
 		F3A8C52D1B7E4096D5F20C41 /* NetFS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9E5B61C3D0F2847C1A7E938 /* NetFS.framework */; };
@@ -37,6 +38,7 @@
 		281944B21EC24C30A989073F /* NetworkWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkWatcher.swift; sourceTree = "<group>"; };
 		AAD251D334FF4F12B7E49601 /* MountSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountSession.swift; sourceTree = "<group>"; };
 		F7D9E4B30A1C2F5E8B7D6A90 /* MountEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountEngine.swift; sourceTree = "<group>"; };
+		FF00112233445566778899AB /* VPNDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNDetector.swift; sourceTree = "<group>"; };
 		0C5AD50A00B879C33DF25814 /* AnchorHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = AnchorHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 		42FD13D8BD2FF33938AA114F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		5B2C4C2273CA4D2C70CC9687 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -163,6 +165,7 @@
 				281944B21EC24C30A989073F /* NetworkWatcher.swift */,
 				AAD251D334FF4F12B7E49601 /* MountSession.swift */,
 				F7D9E4B30A1C2F5E8B7D6A90 /* MountEngine.swift */,
+				FF00112233445566778899AB /* VPNDetector.swift */,
 			);
 			path = AnchorHelper;
 			sourceTree = "<group>";
@@ -281,6 +284,7 @@
 				2FE7FF0270814D22AC46AC75 /* NetworkWatcher.swift in Sources */,
 				794B74A111C24C54A27C8365 /* MountSession.swift in Sources */,
 				B1C3A7F20E5D4A8F9C2E1D36 /* MountEngine.swift in Sources */,
+				FF00112233445566778899AA /* VPNDetector.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
