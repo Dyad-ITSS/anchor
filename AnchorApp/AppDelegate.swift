@@ -1,4 +1,5 @@
 import AppKit
+import UserNotifications
 import AnchorCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -10,5 +11,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         HelperManager.shared.registerIfNeeded()
         Task { await EntitlementManager.shared.refresh() }
         Task { await StoreManager.shared.loadProducts() }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
     }
 }

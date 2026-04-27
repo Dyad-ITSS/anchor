@@ -1,4 +1,6 @@
 import SwiftUI
+import AppKit
+import AnchorCore
 
 struct AboutTabView: View {
     @EnvironmentObject var entitlement: EntitlementManager
@@ -31,6 +33,39 @@ struct AboutTabView: View {
                 .padding(.vertical, 4)
                 .background(Color.green.opacity(0.12))
                 .cornerRadius(6)
+
+                // Export / import (Pro only)
+                Divider().padding(.horizontal, 40)
+
+                HStack(spacing: 12) {
+                    Button("Export Config") {
+                        Task { @MainActor in
+                            guard let configStore = try? ConfigStore(),
+                                  let config = try? await configStore.load(),
+                                  let data = try? JSONEncoder().encode(config) else { return }
+                            let panel = NSSavePanel()
+                            panel.nameFieldStringValue = "anchor-config.json"
+                            if panel.runModal() == .OK, let url = panel.url {
+                                try? data.write(to: url)
+                            }
+                        }
+                    }
+
+                    Button("Import Config") {
+                        Task { @MainActor in
+                            let panel = NSOpenPanel()
+                            panel.allowedContentTypes = [.json]
+                            if panel.runModal() == .OK,
+                               let url = panel.url,
+                               let data = try? Data(contentsOf: url),
+                               let config = try? JSONDecoder().decode(AnchorConfig.self, from: data),
+                               let configStore = try? ConfigStore() {
+                                try? await configStore.save(config)
+                                MountNotifications.postConfigUpdated()
+                            }
+                        }
+                    }
+                }
             } else {
                 Text("Free — up to 3 shares")
                     .font(.caption)
