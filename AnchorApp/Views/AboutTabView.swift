@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct AboutTabView: View {
+    @EnvironmentObject var entitlement: EntitlementManager
+    @EnvironmentObject var store: StoreManager
+
     private let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
 
     var body: some View {
@@ -16,29 +19,46 @@ struct AboutTabView: View {
             Text("Version \(version)")
                 .foregroundColor(.secondary)
 
-            Text("Free — up to 3 shares")
-                .font(.caption)
+            // Pro status badge
+            if entitlement.isPro {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundColor(.green)
+                    Text("Anchor Pro — Active")
+                        .fontWeight(.medium)
+                }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .background(Color.secondary.opacity(0.15))
+                .background(Color.green.opacity(0.12))
                 .cornerRadius(6)
-
-            VStack(spacing: 8) {
-                Button("Upgrade to Pro — $9.99") {
-                    // TODO: Implement StoreKit purchase (Task 14)
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button("Restore Purchase") {
-                    // TODO: Implement StoreKit restore (Task 14)
-                }
-                .foregroundColor(.secondary)
-
-                Link("View on GitHub", destination: URL(string: "https://github.com")!)
+            } else {
+                Text("Free — up to 3 shares")
                     .font(.caption)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.secondary.opacity(0.15))
+                    .cornerRadius(6)
+
+                VStack(spacing: 8) {
+                    Button("Upgrade to Pro — \(store.proProduct?.displayPrice ?? "$9.99")") {
+                        Task { await store.purchase() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(store.isPurchasing)
+
+                    Button("Restore Purchase") {
+                        Task { await store.restorePurchases() }
+                    }
                     .foregroundColor(.secondary)
+                    .disabled(store.isPurchasing)
+                }
+                .padding(.top, 4)
             }
-            .padding(.top, 8)
+
+            Link("View on GitHub", destination: URL(string: "https://github.com")!)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
         }
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

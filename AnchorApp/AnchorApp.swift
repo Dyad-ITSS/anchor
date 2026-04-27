@@ -7,6 +7,8 @@ struct AnchorApp: App {
     var body: some Scene {
         Settings {
             SettingsView()
+                .environmentObject(EntitlementManager.shared)
+                .environmentObject(StoreManager.shared)
         }
     }
 }

@@ -4,6 +4,8 @@ import AnchorCore
 private let freeShareLimit = 3
 
 struct SharesTabView: View {
+    @EnvironmentObject var entitlement: EntitlementManager
+
     @State private var config: AnchorConfig = AnchorConfig()
     @State private var selectedShareID: UUID?
     @State private var showingAddSheet = false
@@ -32,7 +34,7 @@ struct SharesTabView: View {
                 Button(action: { showingAddSheet = true }) {
                     Image(systemName: "plus")
                 }
-                .disabled(config.shares.count >= freeShareLimit)
+                .disabled(!entitlement.isPro && config.shares.count >= freeShareLimit)
 
                 Button(action: removeSelectedShare) {
                     Image(systemName: "minus")
@@ -41,7 +43,7 @@ struct SharesTabView: View {
 
                 Spacer()
 
-                if config.shares.count >= freeShareLimit {
+                if !entitlement.isPro && config.shares.count >= freeShareLimit {
                     Text("\(config.shares.count)/\(freeShareLimit) shares (Free) — Upgrade to Pro for more")
                         .font(.caption)
                         .foregroundColor(.secondary)
