@@ -77,6 +77,11 @@ struct ShareEditSheet: View {
     @State private var fallbackHost: String
     @State private var testState: TestState = .idle
 
+    // Share discovery
+    @State private var discoveredShares: [String] = []
+    @State private var isDiscovering = false
+    @State private var discoveryAttempted = false
+
     private let existingShare: Share?
 
     @Environment(\.dismiss) private var dismiss
@@ -85,12 +90,16 @@ struct ShareEditSheet: View {
         UserDefaults(suiteName: "group.com.yourname.anchor")?.string(forKey: "detectedVPN")
     }
 
-    init(share: Share?, onSave: @escaping (Share) -> Void) {
+    init(share: Share?,
+         prefilledHost: String = "",
+         prefilledShareName: String = "",
+         prefilledDisplayName: String = "",
+         onSave: @escaping (Share) -> Void) {
         self.existingShare = share
         self.onSave = onSave
-        _displayName = State(initialValue: share?.displayName ?? "")
-        _host = State(initialValue: share?.host ?? "")
-        _shareName = State(initialValue: share?.shareName ?? "")
+        _displayName = State(initialValue: share?.displayName ?? prefilledDisplayName)
+        _host = State(initialValue: share?.host ?? prefilledHost)
+        _shareName = State(initialValue: share?.shareName ?? prefilledShareName)
         _username = State(initialValue: share?.username ?? "")
         _portString = State(initialValue: share?.port.map(String.init) ?? "")
         _fallbackHost = State(initialValue: share?.fallbackHost ?? "")
@@ -130,7 +139,58 @@ struct ShareEditSheet: View {
                             .frame(width: 90)
                     }
 
-                    LabeledField(label: "Share Name", placeholder: "case-sensitive", text: $shareName)
+                    // Share Name — picker if shares discovered, text field otherwise
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Text("SHARE NAME")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            if !host.trimmingCharacters(in: .whitespaces).isEmpty {
+                                Button {
+                                    Task { await discoverShares() }
+                                } label: {
+                                    if isDiscovering {
+                                        HStack(spacing: 4) {
+                                            ProgressView().scaleEffect(0.6)
+                                            Text("Discovering…").font(.system(size: 10))
+                                        }
+                                    } else {
+                                        Label(discoveryAttempted ? "Refresh" : "Discover Shares",
+                                              systemImage: "arrow.clockwise.circle")
+                                            .font(.system(size: 10))
+                                    }
+                                }
+                                .buttonStyle(.borderless)
+                                .foregroundColor(.accentColor)
+                                .disabled(isDiscovering)
+                            }
+                        }
+                        if !discoveredShares.isEmpty {
+                            Picker("", selection: $shareName) {
+                                Text("Select a share…").tag("")
+                                ForEach(discoveredShares, id: \.self) { s in
+                                    HStack {
+                                        Image(systemName: "folder")
+                                        Text(s)
+                                    }.tag(s)
+                                }
+                            }
+                            .labelsHidden()
+                            .onChange(of: shareName) { newValue in
+                                if displayName.isEmpty || displayName == host {
+                                    displayName = newValue
+                                }
+                            }
+                        } else {
+                            NativeTextField(placeholder: "case-sensitive", text: $shareName)
+                                .frame(height: 22)
+                        }
+                        if discoveryAttempted && discoveredShares.isEmpty && !isDiscovering {
+                            Text("No accessible shares found — enter name manually")
+                                .font(.system(size: 10)).foregroundColor(.secondary)
+                        }
+                    }
 
                     LabeledField(label: "Username (blank = Keychain default)", placeholder: "", text: $username)
 
@@ -222,6 +282,27 @@ struct ShareEditSheet: View {
             .padding(.vertical, 12)
         }
         .frame(width: 400)
+        .task {
+            // Auto-discover shares when sheet opens with a pre-filled host
+            guard existingShare == nil,
+                  !host.trimmingCharacters(in: .whitespaces).isEmpty,
+                  shareName.isEmpty
+            else { return }
+            await discoverShares()
+        }
+    }
+
+    private func discoverShares() async {
+        isDiscovering = true
+        let h = host.trimmingCharacters(in: .whitespaces)
+        let u = username.trimmingCharacters(in: .whitespaces)
+        discoveredShares = await ShareEnumerator.enumerate(host: h, username: u.isEmpty ? nil : u)
+        discoveryAttempted = true
+        isDiscovering = false
+        // Auto-select if only one share found
+        if discoveredShares.count == 1 {
+            shareName = discoveredShares[0]
+        }
     }
 
     private func testConnection() async {

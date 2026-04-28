@@ -9,7 +9,8 @@ struct SharesTabView: View {
     @State private var config: AnchorConfig = ConfigStore().loadSync()
     @State private var mountEvents: [UUID: MountEvent] = [:]
     @State private var selectedID: UUID? = nil
-    @State private var showingAdd = false
+    @State private var showingBrowser = false
+    @State private var pendingAdd: PendingShare? = nil
     @State private var editingShare: Share? = nil
     @State private var notificationToken: NSObjectProtocol? = nil
 
@@ -45,8 +46,8 @@ struct SharesTabView: View {
             Divider()
 
             HStack(spacing: 0) {
-                // Add button
-                Button { showingAdd = true } label: { Image(systemName: "plus") }
+                // Add button — opens network browser
+                Button { showingBrowser = true } label: { Image(systemName: "plus") }
                     .buttonStyle(.borderless)
                     .frame(width: 24, height: 22)
                     .disabled(!entitlement.isPro && config.shares.count >= freeShareLimit)
@@ -92,8 +93,20 @@ struct SharesTabView: View {
         }
         .onAppear { startObserving() }
         .onDisappear { stopObserving() }
-        .sheet(isPresented: $showingAdd) {
-            ShareEditSheet(share: nil) { saved in
+        // Step 1: Browse network to pick a server + share
+        .sheet(isPresented: $showingBrowser) {
+            NetworkBrowserSheet { host, shareName, displayName in
+                pendingAdd = PendingShare(host: host, shareName: shareName, displayName: displayName)
+            }
+        }
+        // Step 2: Confirm / edit the pre-filled share details
+        .sheet(item: $pendingAdd) { pending in
+            ShareEditSheet(
+                share: nil,
+                prefilledHost: pending.host,
+                prefilledShareName: pending.shareName,
+                prefilledDisplayName: pending.displayName
+            ) { saved in
                 config = AnchorConfig(
                     shares: config.shares + [saved],
                     activeProfile: config.activeProfile,
@@ -139,6 +152,14 @@ struct SharesTabView: View {
             notificationToken = nil
         }
     }
+}
+
+// Carries browser selection into the add-share sheet
+struct PendingShare: Identifiable {
+    let id = UUID()
+    let host: String
+    let shareName: String
+    let displayName: String
 }
 
 // MARK: - Status badge (right side of each row)
