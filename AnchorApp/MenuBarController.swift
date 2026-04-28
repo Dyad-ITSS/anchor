@@ -83,8 +83,8 @@ final class MenuBarController {
     private func loadConfig() {
         Task { @MainActor [weak self] in
             guard let self else { return }
-            let store = try? ConfigStore()
-            self.config = (try? await store?.load()) ?? AnchorConfig()
+            let store = ConfigStore()
+            self.config = (try? await store.load()) ?? AnchorConfig()
             self.buildMenu()
             self.updateIcon()
         }

@@ -28,13 +28,15 @@ public actor ConfigStore {
 
     // MARK: Init
 
-    /// Production initialiser — resolves the file URL from the App Group container.
-    ///
-    /// - Throws: ``ConfigStoreError/appGroupUnavailable`` when the container cannot
-    ///   be resolved (e.g. entitlement missing or sandbox misconfigured).
-    public init() throws {
-        guard let url = AppGroup.configFileURL else {
-            throw ConfigStoreError.appGroupUnavailable
+    /// Production initialiser — uses App Group container when available (signed build),
+    /// falls back to /tmp/anchor-config.json for unsigned dev builds.
+    public init() {
+        let url: URL
+        if let groupURL = AppGroup.configFileURL {
+            url = groupURL
+        } else {
+            // Fallback: unsigned/dev build — /tmp is always writable
+            url = URL(fileURLWithPath: "/tmp/anchor-config.json")
         }
         self.fileURL = url
         let enc = JSONEncoder()
@@ -76,5 +78,28 @@ public actor ConfigStore {
     public func save(_ config: AnchorConfig) throws {
         let data = try encoder.encode(config)
         try data.write(to: fileURL, options: .atomic)
+    }
+
+    /// The file URL being used by this store instance (for debugging).
+    public var resolvedFileURL: URL { fileURL }
+
+    // MARK: - Synchronous helpers (for UI layer — avoids actor hop timing issues)
+
+    /// Saves synchronously from any thread. Use from SwiftUI views where
+    /// async Task timing may race with view teardown.
+    public nonisolated func saveSync(_ config: AnchorConfig) {
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? enc.encode(config) else { return }
+        try? data.write(to: fileURL, options: .atomic)
+    }
+
+    /// Loads synchronously from any thread.
+    public nonisolated func loadSync() -> AnchorConfig {
+        guard (try? fileURL.checkResourceIsReachable()) == true,
+              let data = try? Data(contentsOf: fileURL),
+              let config = try? JSONDecoder().decode(AnchorConfig.self, from: data)
+        else { return AnchorConfig() }
+        return config
     }
 }

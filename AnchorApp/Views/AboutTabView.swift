@@ -40,8 +40,7 @@ struct AboutTabView: View {
                 HStack(spacing: 12) {
                     Button("Export Config") {
                         Task { @MainActor in
-                            guard let configStore = try? ConfigStore(),
-                                  let config = try? await configStore.load(),
+                            guard let config = try? await ConfigStore().load(),
                                   let data = try? JSONEncoder().encode(config) else { return }
                             let panel = NSSavePanel()
                             panel.nameFieldStringValue = "anchor-config.json"
@@ -58,9 +57,8 @@ struct AboutTabView: View {
                             if panel.runModal() == .OK,
                                let url = panel.url,
                                let data = try? Data(contentsOf: url),
-                               let config = try? JSONDecoder().decode(AnchorConfig.self, from: data),
-                               let configStore = try? ConfigStore() {
-                                try? await configStore.save(config)
+                               let config = try? JSONDecoder().decode(AnchorConfig.self, from: data) {
+                                try? await ConfigStore().save(config)
                                 MountNotifications.postConfigUpdated()
                             }
                         }

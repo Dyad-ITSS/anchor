@@ -103,13 +103,13 @@ struct ProfilesTabView: View {
 
     @MainActor
     private func loadConfig() async {
-        guard let configStore = try? ConfigStore() else { return }
+        let configStore = ConfigStore()
         config = (try? await configStore.load()) ?? AnchorConfig()
     }
 
     @MainActor
     private func saveConfig() async {
-        guard let configStore = try? ConfigStore() else { return }
+        let configStore = ConfigStore()
         let snapshot = config
         try? await configStore.save(snapshot)
         MountNotifications.postConfigUpdated()
