@@ -15,20 +15,35 @@ struct NetworkBrowserSheet: View {
     @State private var expandedHost: String? = nil
     @State private var showManualEntry = false
     @State private var manualHost = ""
+    // Resolved NetBIOS names for IP-only entries (from smbutil status)
+    @State private var resolvedNames: [String: String] = [:]
+    @State private var resolvingIPs: Set<String> = []
 
     private var allServers: [(name: String, host: String)] {
-        // Bonjour servers now store IP as host, so dedup with subnet scan works correctly.
         var result = bonjour.servers.map { (name: friendlyName($0.name), host: $0.host) }
         let bonjourHosts = Set(bonjour.servers.map(\.host))
         for ip in subnet.found where !bonjourHosts.contains(ip) {
-            result.append((name: ip, host: ip))
+            // Use resolved NetBIOS name if available, otherwise show IP temporarily
+            let name = resolvedNames[ip] ?? ip
+            result.append((name: name, host: ip))
         }
         return result
     }
 
-    /// Strips trailing .local from mDNS hostnames for a cleaner display name.
     private func friendlyName(_ raw: String) -> String {
         raw.hasSuffix(".local") ? String(raw.dropLast(6)) : raw
+    }
+
+    /// Resolves the NetBIOS name for an IP-only server asynchronously.
+    private func resolveNameIfNeeded(ip: String) {
+        guard resolvedNames[ip] == nil, !resolvingIPs.contains(ip) else { return }
+        resolvingIPs.insert(ip)
+        Task {
+            if let name = await ShareEnumerator.serverName(for: ip) {
+                resolvedNames[ip] = name.lowercased().capitalized
+            }
+            resolvingIPs.remove(ip)
+        }
     }
 
     var body: some View {
@@ -42,6 +57,13 @@ struct NetworkBrowserSheet: View {
         .frame(width: 400, height: 460)
         .onAppear { bonjour.start() }
         .onDisappear { bonjour.stop() }
+        .onChange(of: subnet.found) { ips in
+            // Resolve friendly names for newly discovered IPs
+            let bonjourHosts = Set(bonjour.servers.map(\.host))
+            for ip in ips where !bonjourHosts.contains(ip) {
+                resolveNameIfNeeded(ip: ip)
+            }
+        }
         .sheet(isPresented: $showManualEntry) { manualEntrySheet }
     }
 
@@ -91,6 +113,10 @@ struct NetworkBrowserSheet: View {
         let isLoading = loadingHosts.contains(server.host)
 
         VStack(alignment: .leading, spacing: 0) {
+            EmptyView().onAppear {
+                // IP-only entries: resolve friendly name on first display
+                if server.name == server.host { resolveNameIfNeeded(ip: server.host) }
+            }
             // Server header row
             Button {
                 toggleExpand(server)

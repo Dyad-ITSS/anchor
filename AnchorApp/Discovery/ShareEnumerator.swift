@@ -1,8 +1,38 @@
 import Foundation
 
-/// Enumerates SMB shares via `smbutil view`.
-/// Works on unsigned dev builds; fails gracefully in a signed sandbox (returns []).
+/// Enumerates SMB shares and resolves server names via `smbutil`.
+/// Works on unsigned dev builds; fails gracefully in a signed sandbox (returns []/nil).
 enum ShareEnumerator {
+
+    /// Returns the NetBIOS/SMB server name for an IP (e.g. "MIKEAI").
+    /// Used to show a friendly name for servers not advertising via Bonjour.
+    static func serverName(for ip: String) async -> String? {
+        await withCheckedContinuation { cont in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let proc = Process()
+                proc.executableURL = URL(fileURLWithPath: "/usr/bin/smbutil")
+                proc.arguments = ["status", ip]
+                let pipe = Pipe()
+                proc.standardOutput = pipe
+                proc.standardError = Pipe()
+                guard (try? proc.run()) != nil else { cont.resume(returning: nil); return }
+                DispatchQueue.global().asyncAfter(deadline: .now() + 3) {
+                    if proc.isRunning { proc.terminate() }
+                }
+                proc.waitUntilExit()
+                let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+                // Parse "Server: MIKEAI"
+                let name = output.components(separatedBy: "\n")
+                    .first { $0.hasPrefix("Server:") }
+                    .flatMap { line -> String? in
+                        let parts = line.components(separatedBy: ": ")
+                        guard parts.count >= 2 else { return nil }
+                        return parts[1].trimmingCharacters(in: .whitespaces)
+                    }
+                cont.resume(returning: name?.isEmpty == false ? name : nil)
+            }
+        }
+    }
 
     static func enumerate(host: String, username: String? = nil) async -> [String] {
         await withCheckedContinuation { cont in
