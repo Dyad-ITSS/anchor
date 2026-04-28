@@ -26,7 +26,7 @@ enum ShareEnumerator {
 
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: "/usr/bin/smbutil")
-        proc.arguments = ["view", "-A", urlArg]
+        proc.arguments = ["view", urlArg]
 
         let pipe = Pipe()
         proc.standardOutput = pipe
