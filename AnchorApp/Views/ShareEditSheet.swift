@@ -1,6 +1,42 @@
 import SwiftUI
 import AnchorCore
 import Network
+import AppKit
+
+// NSViewRepresentable wrapper — fixes macOS SwiftUI paste rendering bug where
+// pasted text doesn't appear until focus changes (setNeedsDisplay not called).
+private struct NativeTextField: NSViewRepresentable {
+    let placeholder: String
+    @Binding var text: String
+    var isDisabled: Bool = false
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = NSTextField()
+        field.placeholderString = placeholder
+        field.bezelStyle = .roundedBezel
+        field.delegate = context.coordinator
+        field.isEditable = !isDisabled
+        field.isEnabled = !isDisabled
+        return field
+    }
+
+    func updateNSView(_ nsView: NSTextField, context: Context) {
+        if nsView.stringValue != text { nsView.stringValue = text }
+        nsView.isEditable = !isDisabled
+        nsView.isEnabled = !isDisabled
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+
+    class Coordinator: NSObject, NSTextFieldDelegate {
+        @Binding var text: String
+        init(text: Binding<String>) { _text = text }
+        func controlTextDidChange(_ obj: Notification) {
+            guard let f = obj.object as? NSTextField else { return }
+            text = f.stringValue
+        }
+    }
+}
 
 enum TestState: Equatable {
     case idle
@@ -59,29 +95,29 @@ struct ShareEditSheet: View {
                 .padding(.bottom, 16)
 
             VStack(spacing: 8) {
-                TextField("Display Name", text: $displayName)
-                    .textFieldStyle(.roundedBorder)
+                NativeTextField(placeholder: "Display Name", text: $displayName)
+                    .frame(height: 22)
 
-                TextField("Host / IP", text: $host)
-                    .textFieldStyle(.roundedBorder)
+                NativeTextField(placeholder: "Host / IP", text: $host)
+                    .frame(height: 22)
 
-                TextField("Share Name (case-sensitive)", text: $shareName)
-                    .textFieldStyle(.roundedBorder)
+                NativeTextField(placeholder: "Share Name (case-sensitive)", text: $shareName)
+                    .frame(height: 22)
 
-                TextField("Username (optional)", text: $username)
-                    .textFieldStyle(.roundedBorder)
+                NativeTextField(placeholder: "Username (optional)", text: $username)
+                    .frame(height: 22)
 
                 HStack {
                     if !entitlement.isPro {
                         Image(systemName: "lock.fill")
                             .foregroundColor(.secondary)
                     }
-                    TextField(
-                        vpnFallbackPlaceholder,
-                        text: entitlement.isPro ? $fallbackHost : .constant("")
+                    NativeTextField(
+                        placeholder: vpnFallbackPlaceholder,
+                        text: entitlement.isPro ? $fallbackHost : .constant(""),
+                        isDisabled: !entitlement.isPro
                     )
-                    .textFieldStyle(.roundedBorder)
-                    .disabled(!entitlement.isPro)
+                    .frame(height: 22)
                     .help(entitlement.isPro ? "VPN fallback host for this share" : "Upgrade to Pro to enable VPN fallback host")
                 }
             }
