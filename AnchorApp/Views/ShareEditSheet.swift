@@ -1,5 +1,13 @@
 import SwiftUI
 import AnchorCore
+import Network
+
+enum TestState: Equatable {
+    case idle
+    case testing
+    case ok(Int)
+    case fail
+}
 
 struct ShareEditSheet: View {
     @EnvironmentObject var entitlement: EntitlementManager
@@ -11,6 +19,7 @@ struct ShareEditSheet: View {
     @State private var shareName: String
     @State private var username: String
     @State private var fallbackHost: String
+    @State private var testState: TestState = .idle
 
     private let existingShare: Share?
 
@@ -77,6 +86,35 @@ struct ShareEditSheet: View {
                 }
             }
 
+            HStack(spacing: 10) {
+                Button(action: { Task { await testConnection() } }) {
+                    HStack(spacing: 5) {
+                        if case .testing = testState {
+                            ProgressView().scaleEffect(0.7)
+                        }
+                        Text("Test Connection")
+                    }
+                }
+                .disabled(host.isEmpty || testState == .testing)
+
+                switch testState {
+                case .idle: EmptyView()
+                case .testing: Text("Testing…").font(.caption).foregroundColor(.secondary)
+                case .ok(let ms):
+                    HStack(spacing: 4) {
+                        Circle().fill(Color.green).frame(width: 7, height: 7)
+                        Text("Reachable · \(ms)ms").font(.caption).foregroundColor(.green)
+                    }
+                case .fail:
+                    HStack(spacing: 4) {
+                        Circle().fill(Color.red).frame(width: 7, height: 7)
+                        Text("Unreachable").font(.caption).foregroundColor(.red)
+                    }
+                }
+                Spacer()
+            }
+            .padding(.top, 8)
+
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
@@ -89,6 +127,45 @@ struct ShareEditSheet: View {
         }
         .padding(20)
         .frame(width: 360)
+    }
+
+    private func testConnection() async {
+        testState = .testing
+        let start = Date()
+        let reachable = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+            let conn = NWConnection(
+                host: NWEndpoint.Host(host),
+                port: NWEndpoint.Port(rawValue: 445)!,
+                using: .tcp
+            )
+            var done = false
+            let timer = DispatchWorkItem {
+                guard !done else { return }
+                done = true
+                conn.cancel()
+                cont.resume(returning: false)
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.5, execute: timer)
+            conn.stateUpdateHandler = { state in
+                switch state {
+                case .ready:
+                    guard !done else { return }
+                    done = true
+                    timer.cancel()
+                    conn.cancel()
+                    cont.resume(returning: true)
+                case .failed, .cancelled:
+                    guard !done else { return }
+                    done = true
+                    timer.cancel()
+                    cont.resume(returning: false)
+                default: break
+                }
+            }
+            conn.start(queue: .global())
+        }
+        let ms = Int(Date().timeIntervalSince(start) * 1000)
+        testState = reachable ? .ok(ms) : .fail
     }
 
     private func save() {
