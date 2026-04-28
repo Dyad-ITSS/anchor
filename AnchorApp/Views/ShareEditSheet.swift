@@ -8,6 +8,7 @@ enum TestState: Equatable {
     case testing
     case ok(Int)
     case fail
+    case skipped  // VPN path when no fallback host is configured
 }
 
 // NSViewRepresentable wrapper — fixes macOS SwiftUI paste rendering bug where
@@ -81,6 +82,10 @@ struct ShareEditSheet: View {
     @State private var discoveredShares: [String] = []
     @State private var isDiscovering = false
     @State private var discoveryAttempted = false
+
+    // Connection test — separate state per path
+    @State private var lanState: TestState = .idle
+    @State private var vpnState: TestState = .idle
 
     private let existingShare: Share?
 
@@ -224,37 +229,34 @@ struct ShareEditSheet: View {
                     )
                     .help(entitlement.isPro ? "Mesh VPN IP or hostname used when LAN is unreachable" : "Upgrade to Pro to enable VPN fallback routing")
 
-                    // Test Connection — styled card
-                    HStack(spacing: 10) {
-                        Button(action: { Task { await testConnection() } }) {
-                            HStack(spacing: 5) {
-                                if case .testing = testState {
-                                    ProgressView().scaleEffect(0.7)
+                    // Test Connection — tests LAN + VPN in parallel
+                    let isTesting = lanState == .testing || vpnState == .testing
+                    let hasVPN = entitlement.isPro && !fallbackHost.trimmingCharacters(in: .whitespaces).isEmpty
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Button(action: { Task { await testConnection() } }) {
+                                HStack(spacing: 5) {
+                                    if isTesting { ProgressView().scaleEffect(0.7) }
+                                    Text("Test Connection")
                                 }
-                                Text("Test Connection")
                             }
-                        }
-                        .disabled(host.trimmingCharacters(in: .whitespaces).isEmpty || testState == .testing)
+                            .disabled(host.trimmingCharacters(in: .whitespaces).isEmpty || isTesting)
 
-                        switch testState {
-                        case .idle:
-                            Text("Pings port 445")
-                                .font(.caption)
-                                .foregroundColor(Color(white: 0.5))
-                        case .testing:
-                            Text("Testing…").font(.caption).foregroundColor(.secondary)
-                        case .ok(let ms):
-                            HStack(spacing: 4) {
-                                Circle().fill(Color.green).frame(width: 7, height: 7)
-                                Text("Reachable · \(ms)ms").font(.caption).foregroundColor(.green)
+                            if lanState == .idle && vpnState == .idle {
+                                Text(hasVPN ? "Tests LAN + VPN paths" : "Tests LAN path")
+                                    .font(.caption).foregroundColor(Color(white: 0.5))
                             }
-                        case .fail:
-                            HStack(spacing: 4) {
-                                Circle().fill(Color.red).frame(width: 7, height: 7)
-                                Text("Unreachable").font(.caption).foregroundColor(.red)
+                            Spacer()
+                        }
+
+                        if lanState != .idle || vpnState != .idle {
+                            VStack(alignment: .leading, spacing: 4) {
+                                TestPathRow(label: "LAN", state: lanState)
+                                if hasVPN || vpnState != .idle {
+                                    TestPathRow(label: "VPN", state: vpnState, isVPN: true)
+                                }
                             }
                         }
-                        Spacer()
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
@@ -306,20 +308,32 @@ struct ShareEditSheet: View {
     }
 
     private func testConnection() async {
-        testState = .testing
-        let targetHost = host.trimmingCharacters(in: .whitespaces)
+        let lanHost = host.trimmingCharacters(in: .whitespaces)
+        let vpnHost = fallbackHost.trimmingCharacters(in: .whitespaces)
+        let hasVPN = entitlement.isPro && !vpnHost.isEmpty
+
+        lanState = .testing
+        vpnState = hasVPN ? .testing : .skipped
+
+        // Run both probes in parallel
+        async let lanProbe = probe445(host: lanHost)
+        async let vpnProbe = hasVPN ? probe445(host: vpnHost) : (false, 0)
+
+        let (lanOk, lanMs) = await lanProbe
+        let (vpnOk, vpnMs) = await vpnProbe
+
+        lanState = lanOk ? .ok(lanMs) : .fail
+        vpnState = hasVPN ? (vpnOk ? .ok(vpnMs) : .fail) : .skipped
+    }
+
+    private func probe445(host: String) async -> (Bool, Int) {
         let start = Date()
         let reachable = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
-            let conn = NWConnection(
-                host: NWEndpoint.Host(targetHost),
-                port: NWEndpoint.Port(rawValue: 445)!,
-                using: .tcp
-            )
+            let conn = NWConnection(host: .init(host), port: 445, using: .tcp)
             var done = false
             let timer = DispatchWorkItem {
                 guard !done else { return }
-                done = true
-                conn.cancel()
+                done = true; conn.cancel()
                 cont.resume(returning: false)
             }
             DispatchQueue.global().asyncAfter(deadline: .now() + 1.5, execute: timer)
@@ -327,22 +341,18 @@ struct ShareEditSheet: View {
                 switch state {
                 case .ready:
                     guard !done else { return }
-                    done = true
-                    timer.cancel()
-                    conn.cancel()
+                    done = true; timer.cancel(); conn.cancel()
                     cont.resume(returning: true)
                 case .failed, .cancelled:
                     guard !done else { return }
-                    done = true
-                    timer.cancel()
+                    done = true; timer.cancel()
                     cont.resume(returning: false)
                 default: break
                 }
             }
             conn.start(queue: .global())
         }
-        let ms = Int(Date().timeIntervalSince(start) * 1000)
-        testState = reachable ? .ok(ms) : .fail
+        return (reachable, Int(Date().timeIntervalSince(start) * 1000))
     }
 
     private func save() {
@@ -362,5 +372,41 @@ struct ShareEditSheet: View {
         )
         onSave(share)
         dismiss()
+    }
+}
+
+// MARK: - Test path result row
+
+private struct TestPathRow: View {
+    let label: String
+    let state: TestState
+    var isVPN: Bool = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+                .frame(width: 28, alignment: .leading)
+
+            switch state {
+            case .idle:
+                EmptyView()
+            case .testing:
+                ProgressView().scaleEffect(0.6)
+                Text("Testing…").font(.caption).foregroundColor(.secondary)
+            case .ok(let ms):
+                let color: Color = isVPN ? .blue : .green
+                Circle().fill(color).frame(width: 7, height: 7)
+                    .shadow(color: color.opacity(0.5), radius: 2)
+                Text("Reachable · \(ms)ms").font(.caption).foregroundColor(color)
+            case .fail:
+                Circle().fill(Color.red).frame(width: 7, height: 7)
+                Text("Unreachable").font(.caption).foregroundColor(.red)
+            case .skipped:
+                Text("—").font(.caption).foregroundColor(Color(white: 0.5))
+                Text("no fallback host configured").font(.caption).foregroundColor(Color(white: 0.5))
+            }
+        }
     }
 }
