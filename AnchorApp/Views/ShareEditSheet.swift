@@ -58,7 +58,7 @@ struct ShareEditSheet: View {
                 .font(.headline)
                 .padding(.bottom, 16)
 
-            Form {
+            VStack(spacing: 8) {
                 TextField("Display Name", text: $displayName)
                     .textFieldStyle(.roundedBorder)
 
