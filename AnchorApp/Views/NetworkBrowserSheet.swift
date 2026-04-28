@@ -17,12 +17,18 @@ struct NetworkBrowserSheet: View {
     @State private var manualHost = ""
 
     private var allServers: [(name: String, host: String)] {
-        var result = bonjour.servers.map { (name: $0.name, host: $0.host) }
+        // Bonjour servers now store IP as host, so dedup with subnet scan works correctly.
+        var result = bonjour.servers.map { (name: friendlyName($0.name), host: $0.host) }
         let bonjourHosts = Set(bonjour.servers.map(\.host))
         for ip in subnet.found where !bonjourHosts.contains(ip) {
             result.append((name: ip, host: ip))
         }
         return result
+    }
+
+    /// Strips trailing .local from mDNS hostnames for a cleaner display name.
+    private func friendlyName(_ raw: String) -> String {
+        raw.hasSuffix(".local") ? String(raw.dropLast(6)) : raw
     }
 
     var body: some View {
