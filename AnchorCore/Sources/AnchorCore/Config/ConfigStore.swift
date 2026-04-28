@@ -32,11 +32,19 @@ public actor ConfigStore {
     /// falls back to /tmp/anchor-config.json for unsigned dev builds.
     public init() {
         let url: URL
-        if let groupURL = AppGroup.configFileURL {
+        // containerURL returns non-nil even when unsigned; verify the directory exists
+        // (signed + provisioned builds have the Group Container created automatically).
+        if let groupURL = AppGroup.configFileURL,
+           let containerDir = AppGroup.containerURL,
+           FileManager.default.fileExists(atPath: containerDir.path) {
             url = groupURL
         } else {
-            // Fallback: unsigned/dev build — /tmp is always writable
-            url = URL(fileURLWithPath: "/tmp/anchor-config.json")
+            // Fallback: unsigned/dev build — use Application Support (survives reboots)
+            let appSupport = FileManager.default
+                .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("Anchor", isDirectory: true)
+            try? FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
+            url = appSupport.appendingPathComponent("config.json")
         }
         self.fileURL = url
         let enc = JSONEncoder()
