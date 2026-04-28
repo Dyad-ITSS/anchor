@@ -40,7 +40,7 @@ struct NetworkBrowserSheet: View {
         resolvingIPs.insert(ip)
         Task {
             if let name = await ShareEnumerator.serverName(for: ip) {
-                resolvedNames[ip] = name.lowercased().capitalized
+                resolvedNames[ip] = name.lowercased()
             }
             resolvingIPs.remove(ip)
         }
