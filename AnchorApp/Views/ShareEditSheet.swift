@@ -3,6 +3,13 @@ import AnchorCore
 import Network
 import AppKit
 
+enum TestState: Equatable {
+    case idle
+    case testing
+    case ok(Int)
+    case fail
+}
+
 // NSViewRepresentable wrapper — fixes macOS SwiftUI paste rendering bug where
 // pasted text doesn't appear until focus changes (setNeedsDisplay not called).
 private struct NativeTextField: NSViewRepresentable {
@@ -38,11 +45,23 @@ private struct NativeTextField: NSViewRepresentable {
     }
 }
 
-enum TestState: Equatable {
-    case idle
-    case testing
-    case ok(Int)
-    case fail
+// Label + native field pair matching the mockup design
+private struct LabeledField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+    var isDisabled: Bool = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+            NativeTextField(placeholder: placeholder, text: $text, isDisabled: isDisabled)
+                .frame(height: 22)
+        }
+    }
 }
 
 struct ShareEditSheet: View {
@@ -54,6 +73,7 @@ struct ShareEditSheet: View {
     @State private var host: String
     @State private var shareName: String
     @State private var username: String
+    @State private var portString: String
     @State private var fallbackHost: String
     @State private var testState: TestState = .idle
 
@@ -72,6 +92,7 @@ struct ShareEditSheet: View {
         _host = State(initialValue: share?.host ?? "")
         _shareName = State(initialValue: share?.shareName ?? "")
         _username = State(initialValue: share?.username ?? "")
+        _portString = State(initialValue: share?.port.map(String.init) ?? "")
         _fallbackHost = State(initialValue: share?.fallbackHost ?? "")
     }
 
@@ -81,75 +102,113 @@ struct ShareEditSheet: View {
         !shareName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    private var vpnFallbackPlaceholder: String {
+    private var vpnPlaceholder: String {
         if let vpn = detectedVPN, vpn != "None" {
-            return "VPN Fallback Host (\(vpn) detected)"
+            return "e.g. 100.64.93.215 — \(vpn) detected"
         }
-        return "VPN Fallback Host"
+        return "e.g. 100.64.93.215 or hostname.tailscale"
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(existingShare == nil ? "Add Share" : "Edit Share")
                 .font(.headline)
-                .padding(.bottom, 16)
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
 
-            VStack(spacing: 8) {
-                NativeTextField(placeholder: "Display Name", text: $displayName)
-                    .frame(height: 22)
+            Divider()
 
-                NativeTextField(placeholder: "Host / IP", text: $host)
-                    .frame(height: 22)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
 
-                NativeTextField(placeholder: "Share Name (case-sensitive)", text: $shareName)
-                    .frame(height: 22)
+                    LabeledField(label: "Display Name", placeholder: "e.g. Mac Mini (dev)", text: $displayName)
 
-                NativeTextField(placeholder: "Username (optional)", text: $username)
-                    .frame(height: 22)
-
-                HStack {
-                    if !entitlement.isPro {
-                        Image(systemName: "lock.fill")
-                            .foregroundColor(.secondary)
+                    HStack(spacing: 8) {
+                        LabeledField(label: "Host / IP", placeholder: "192.168.0.99", text: $host)
+                        LabeledField(label: "Port (blank = 445)", placeholder: "445", text: $portString)
+                            .frame(width: 90)
                     }
-                    NativeTextField(
-                        placeholder: vpnFallbackPlaceholder,
+
+                    LabeledField(label: "Share Name", placeholder: "case-sensitive", text: $shareName)
+
+                    LabeledField(label: "Username (blank = Keychain default)", placeholder: "", text: $username)
+
+                    // Pro Features divider
+                    HStack(spacing: 8) {
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(Color(white: 0.5, opacity: 0.2))
+                        HStack(spacing: 4) {
+                            Text("Pro Features")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                            if !entitlement.isPro {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(Color(white: 0.5, opacity: 0.2))
+                    }
+                    .padding(.vertical, 2)
+
+                    LabeledField(
+                        label: "VPN Fallback Host",
+                        placeholder: vpnPlaceholder,
                         text: entitlement.isPro ? $fallbackHost : .constant(""),
                         isDisabled: !entitlement.isPro
                     )
-                    .frame(height: 22)
-                    .help(entitlement.isPro ? "VPN fallback host for this share" : "Upgrade to Pro to enable VPN fallback host")
-                }
-            }
+                    .help(entitlement.isPro ? "Mesh VPN IP or hostname used when LAN is unreachable" : "Upgrade to Pro to enable VPN fallback routing")
 
-            HStack(spacing: 10) {
-                Button(action: { Task { await testConnection() } }) {
-                    HStack(spacing: 5) {
-                        if case .testing = testState {
-                            ProgressView().scaleEffect(0.7)
+                    // Test Connection — styled card
+                    HStack(spacing: 10) {
+                        Button(action: { Task { await testConnection() } }) {
+                            HStack(spacing: 5) {
+                                if case .testing = testState {
+                                    ProgressView().scaleEffect(0.7)
+                                }
+                                Text("Test Connection")
+                            }
                         }
-                        Text("Test Connection")
-                    }
-                }
-                .disabled(host.isEmpty || testState == .testing)
+                        .disabled(host.trimmingCharacters(in: .whitespaces).isEmpty || testState == .testing)
 
-                switch testState {
-                case .idle: EmptyView()
-                case .testing: Text("Testing…").font(.caption).foregroundColor(.secondary)
-                case .ok(let ms):
-                    HStack(spacing: 4) {
-                        Circle().fill(Color.green).frame(width: 7, height: 7)
-                        Text("Reachable · \(ms)ms").font(.caption).foregroundColor(.green)
+                        switch testState {
+                        case .idle:
+                            Text("Pings port 445")
+                                .font(.caption)
+                                .foregroundColor(Color(white: 0.5))
+                        case .testing:
+                            Text("Testing…").font(.caption).foregroundColor(.secondary)
+                        case .ok(let ms):
+                            HStack(spacing: 4) {
+                                Circle().fill(Color.green).frame(width: 7, height: 7)
+                                Text("Reachable · \(ms)ms").font(.caption).foregroundColor(.green)
+                            }
+                        case .fail:
+                            HStack(spacing: 4) {
+                                Circle().fill(Color.red).frame(width: 7, height: 7)
+                                Text("Unreachable").font(.caption).foregroundColor(.red)
+                            }
+                        }
+                        Spacer()
                     }
-                case .fail:
-                    HStack(spacing: 4) {
-                        Circle().fill(Color.red).frame(width: 7, height: 7)
-                        Text("Unreachable").font(.caption).foregroundColor(.red)
-                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(white: 0.5, opacity: 0.15), lineWidth: 1)
+                    )
                 }
-                Spacer()
+                .padding(20)
             }
-            .padding(.top, 8)
+
+            Divider()
 
             HStack {
                 Spacer()
@@ -159,18 +218,19 @@ struct ShareEditSheet: View {
                     .keyboardShortcut(.defaultAction)
                     .disabled(!isValid)
             }
-            .padding(.top, 16)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
         }
-        .padding(20)
-        .frame(width: 360)
+        .frame(width: 400)
     }
 
     private func testConnection() async {
         testState = .testing
+        let targetHost = host.trimmingCharacters(in: .whitespaces)
         let start = Date()
         let reachable = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
             let conn = NWConnection(
-                host: NWEndpoint.Host(host),
+                host: NWEndpoint.Host(targetHost),
                 port: NWEndpoint.Port(rawValue: 445)!,
                 using: .tcp
             )
@@ -207,13 +267,14 @@ struct ShareEditSheet: View {
     private func save() {
         let trimmedUsername = username.trimmingCharacters(in: .whitespaces)
         let trimmedFallback = fallbackHost.trimmingCharacters(in: .whitespaces)
+        let port = Int(portString.trimmingCharacters(in: .whitespaces))
         let share = Share(
             id: existingShare?.id ?? UUID(),
             displayName: displayName.trimmingCharacters(in: .whitespaces),
             host: host.trimmingCharacters(in: .whitespaces),
             shareName: shareName.trimmingCharacters(in: .whitespaces),
             username: trimmedUsername.isEmpty ? nil : trimmedUsername,
-            port: existingShare?.port,
+            port: port,
             unmountWhenUnreachable: existingShare?.unmountWhenUnreachable ?? true,
             fallbackHost: entitlement.isPro && !trimmedFallback.isEmpty ? trimmedFallback : existingShare?.fallbackHost,
             profiles: existingShare?.profiles ?? []

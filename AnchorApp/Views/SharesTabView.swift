@@ -7,7 +7,7 @@ struct SharesTabView: View {
     @EnvironmentObject var entitlement: EntitlementManager
 
     @State private var config: AnchorConfig = ConfigStore().loadSync()
-    @State private var mountStates: [UUID: MountState] = [:]
+    @State private var mountEvents: [UUID: MountEvent] = [:]
     @State private var selectedID: UUID? = nil
     @State private var showingAdd = false
     @State private var editingShare: Share? = nil
@@ -22,14 +22,17 @@ struct SharesTabView: View {
         VStack(alignment: .leading, spacing: 0) {
             List(selection: $selectedID) {
                 ForEach(config.shares) { share in
+                    let event = mountEvents[share.id]
+                    let state = event?.state ?? .unmounted
                     HStack(spacing: 8) {
-                        StatusDot(state: mountStates[share.id] ?? .unmounted)
+                        StatusDot(state: state)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(share.displayName).fontWeight(.medium)
                             Text("smb://\(share.host)/\(share.shareName)")
                                 .font(.caption).foregroundColor(.secondary)
                         }
                         Spacer()
+                        StateBadge(state: state, mountedHost: event?.mountedHost, share: share)
                     }
                     .tag(share.id)
                     .onTapGesture(count: 2) {
@@ -54,7 +57,7 @@ struct SharesTabView: View {
                     .frame(width: 24, height: 22)
                     .disabled(selectedID == nil)
 
-                // Edit button (standard macOS bottom-bar style)
+                // Edit button
                 Button("Edit…") {
                     if let id = selectedID,
                        let share = config.shares.first(where: { $0.id == id }) {
@@ -126,7 +129,7 @@ struct SharesTabView: View {
 
     private func startObserving() {
         notificationToken = MountNotifications.observeStateChanged { event in
-            mountStates[event.shareID] = event.state
+            mountEvents[event.shareID] = event
         }
     }
 
@@ -138,7 +141,56 @@ struct SharesTabView: View {
     }
 }
 
-// Small coloured status dot
+// MARK: - Status badge (right side of each row)
+
+private struct StateBadge: View {
+    let state: MountState
+    let mountedHost: String?
+    let share: Share
+
+    private var isVPN: Bool {
+        guard let host = mountedHost, let fallback = share.fallbackHost else { return false }
+        return host == fallback
+    }
+
+    var body: some View {
+        Group {
+            switch state {
+            case .mounted:
+                let label = isVPN ? "VPN" : "LAN"
+                let color: Color = isVPN ? .blue : .green
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(color)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(color.opacity(0.12))
+                    .cornerRadius(4)
+            case .mounting:
+                Text("Mounting…")
+                    .font(.system(size: 10))
+                    .foregroundColor(.yellow)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.yellow.opacity(0.12))
+                    .cornerRadius(4)
+            case .unreachable, .error:
+                Text("Unreachable")
+                    .font(.system(size: 10))
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.red.opacity(0.10))
+                    .cornerRadius(4)
+            case .unmounted:
+                EmptyView()
+            }
+        }
+    }
+}
+
+// MARK: - Status dot
+
 struct StatusDot: View {
     let state: MountState
     @State private var animating = false
