@@ -46,8 +46,8 @@ final class MenuBarController {
         let menu = NSMenu()
         for share in config.activeShares {
             let state = shareStates[share.id] ?? .unmounted
-            let dot = state == .mounted ? "● " : "○ "
-            let item = NSMenuItem(title: "\(dot)\(share.displayName)", action: nil, keyEquivalent: "")
+            let item = NSMenuItem()
+            item.attributedTitle = dotTitle(share.displayName, state: state)
             menu.addItem(item)
         }
         if !config.activeShares.isEmpty { menu.addItem(.separator()) }
@@ -81,6 +81,22 @@ final class MenuBarController {
         }
         buildMenu()
         updateIcon()
+    }
+
+    private func dotTitle(_ name: String, state: MountState) -> NSAttributedString {
+        let dotColor: NSColor
+        switch state {
+        case .mounted:             dotColor = .systemGreen
+        case .mounting:            dotColor = .systemYellow
+        case .unreachable, .error: dotColor = .systemRed
+        case .unmounted:           dotColor = .systemGray
+        }
+        let result = NSMutableAttributedString(
+            string: "● ",
+            attributes: [.foregroundColor: dotColor]
+        )
+        result.append(NSAttributedString(string: name))
+        return result
     }
 
     /// Returns true if path is a mount point (different device than its parent).
