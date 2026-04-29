@@ -21,9 +21,26 @@ final class MountEngine {
 
         switch currentState {
         case .mounted:
+            // Detect external unmounts (diskutil, Finder eject, system sleep, etc.)
+            // If the volume is gone from /Volumes, reset to unmounted and remount.
+            if !isAlreadyMounted(host: share.host, shareName: share.shareName) {
+                await session.setState(.unmounted, for: share.id)
+                MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .unmounted))
+                let (primaryUp, _) = await HostProbe.isReachable(share.host)
+                if primaryUp {
+                    await mount(share, usingHost: share.host)
+                    return
+                }
+                if isPro, let fallback = share.fallbackHost {
+                    let (fallbackUp, _) = await HostProbe.isReachable(fallback)
+                    if fallbackUp { await mount(share, usingHost: fallback); return }
+                }
+                await session.setState(.unreachable, for: share.id)
+                MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .unreachable))
+                return
+            }
             let (primaryUp, latencyMs) = await HostProbe.isReachable(share.host)
             if primaryUp {
-                // Refresh latency on health check
                 MountNotifications.postStateChanged(
                     MountEvent(shareID: share.id, state: .mounted, mountedHost: share.host, latencyMs: latencyMs)
                 )
