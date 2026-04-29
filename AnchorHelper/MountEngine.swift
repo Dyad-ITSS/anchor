@@ -89,6 +89,14 @@ final class MountEngine {
             MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .unreachable))
 
         case .mounting:
+            // Recover from stuck .mounting state: if the volume is now actually mounted, update state.
+            if isAlreadyMounted(host: share.host, shareName: share.shareName) {
+                let (_, latencyMs) = await HostProbe.isReachable(share.host)
+                await session.setState(.mounted, for: share.id)
+                MountNotifications.postStateChanged(
+                    MountEvent(shareID: share.id, state: .mounted, mountedHost: share.host, latencyMs: latencyMs)
+                )
+            }
             return
         }
     }
@@ -141,7 +149,8 @@ final class MountEngine {
         return dev != pDev
     }
 
-    /// Checks `mount` output for an existing SMB mount of host/shareName, catching renamed variants like /Volumes/dev-1.
+    /// Checks `mount` output for an existing SMB mount of host/shareName.
+    /// Handles URL-encoded share names (e.g. "Dyad Capital" → "Dyad%20Capital" in mount output).
     private func isAlreadyMounted(host: String, shareName: String) -> Bool {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/sbin/mount")
@@ -150,9 +159,10 @@ final class MountEngine {
         guard (try? task.run()) != nil else { return false }
         task.waitUntilExit()
         let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-        // Mount lines look like: //user@host/shareName on /Volumes/... (smbfs, ...)
-        let needle = "\(host)/\(shareName) on "
-        return output.contains(needle)
+        // Check both raw name and URL-percent-encoded name (macOS encodes spaces as %20 etc.)
+        let encoded = shareName.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? shareName
+        return output.contains("\(host)/\(shareName) on ") ||
+               output.contains("\(host)/\(encoded) on ")
     }
 
     // MARK: - Unmount via diskutil
