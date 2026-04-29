@@ -188,9 +188,8 @@ private final class ShareMenuItemView: NSView {
         latencyLabel.alignment = .right
         if state == .mounted, let event {
             let route = isVPN ? "VPN" : "LAN"
-            var label = route
-            if let ms = event.latencyMs, ms > 0 { label += " · \(ms)ms" }
-            latencyLabel.stringValue = label
+            let ms = event.latencyMs.flatMap { $0 > 0 ? "\($0)ms · " : nil } ?? ""
+            latencyLabel.stringValue = "\(ms)\(route)"
         }
 
         NSLayoutConstraint.activate([
