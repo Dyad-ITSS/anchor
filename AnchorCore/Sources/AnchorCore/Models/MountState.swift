@@ -15,10 +15,13 @@ public struct MountEvent: Codable, Equatable, Sendable {
     public let state: MountState
     /// Which host was used — primary or fallback.
     public let mountedHost: String?
+    /// TCP round-trip latency in milliseconds when the mount was established.
+    public let latencyMs: Int?
 
-    public init(shareID: UUID, state: MountState, mountedHost: String? = nil) {
+    public init(shareID: UUID, state: MountState, mountedHost: String? = nil, latencyMs: Int? = nil) {
         self.shareID = shareID
         self.state = state
         self.mountedHost = mountedHost
+        self.latencyMs = latencyMs
     }
 }

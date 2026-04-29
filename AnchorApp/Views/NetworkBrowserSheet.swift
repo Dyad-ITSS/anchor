@@ -2,20 +2,17 @@ import SwiftUI
 import AnchorCore
 
 struct NetworkBrowserSheet: View {
-    /// Called when the user picks a share (or just a host for manual name entry).
     let onAdd: (_ host: String, _ shareName: String, _ displayName: String) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @StateObject private var bonjour = BonjourScanner()
     @StateObject private var subnet = SubnetScanner()
 
-    // Shares discovered per host: nil = not yet fetched, [] = fetched but empty
     @State private var shareMap: [String: [String]] = [:]
     @State private var loadingHosts: Set<String> = []
     @State private var expandedHost: String? = nil
     @State private var showManualEntry = false
     @State private var manualHost = ""
-    // Resolved NetBIOS names for IP-only entries (from smbutil status)
     @State private var resolvedNames: [String: String] = [:]
     @State private var resolvingIPs: Set<String> = []
 
@@ -23,7 +20,6 @@ struct NetworkBrowserSheet: View {
         var result = bonjour.servers.map { (name: friendlyName($0.name), host: $0.host) }
         let bonjourHosts = Set(bonjour.servers.map(\.host))
         for ip in subnet.found where !bonjourHosts.contains(ip) {
-            // Use resolved NetBIOS name if available, otherwise show IP temporarily
             let name = resolvedNames[ip] ?? ip
             result.append((name: name, host: ip))
         }
@@ -34,7 +30,6 @@ struct NetworkBrowserSheet: View {
         raw.hasSuffix(".local") ? String(raw.dropLast(6)) : raw
     }
 
-    /// Resolves the NetBIOS name for an IP-only server asynchronously.
     private func resolveNameIfNeeded(ip: String) {
         guard resolvedNames[ip] == nil, !resolvingIPs.contains(ip) else { return }
         resolvingIPs.insert(ip)
@@ -57,8 +52,14 @@ struct NetworkBrowserSheet: View {
         .frame(width: 400, height: 460)
         .onAppear { bonjour.start() }
         .onDisappear { bonjour.stop() }
+        .task {
+            // #17 — Auto-trigger subnet scan if Bonjour finds fewer than 2 servers after 3 s
+            try? await Task.sleep(for: .seconds(3))
+            if bonjour.servers.count < 2 && !subnet.isScanning {
+                await subnet.scan()
+            }
+        }
         .onChange(of: subnet.found) { ips in
-            // Resolve friendly names for newly discovered IPs
             let bonjourHosts = Set(bonjour.servers.map(\.host))
             for ip in ips where !bonjourHosts.contains(ip) {
                 resolveNameIfNeeded(ip: ip)
@@ -67,7 +68,7 @@ struct NetworkBrowserSheet: View {
         .sheet(isPresented: $showManualEntry) { manualEntrySheet }
     }
 
-    // MARK: - Subviews
+    // MARK: - Header
 
     private var header: some View {
         HStack {
@@ -82,13 +83,15 @@ struct NetworkBrowserSheet: View {
         .padding(16)
     }
 
+    // MARK: - Server list
+
     private var serverList: some View {
         List {
             if allServers.isEmpty {
-                if bonjour.isSearching {
+                if bonjour.isSearching || subnet.isScanning {
                     HStack(spacing: 8) {
                         ProgressView().scaleEffect(0.75)
-                        Text("Searching via Bonjour…")
+                        Text(subnet.isScanning ? "Scanning subnet…" : "Searching via Bonjour…")
                             .font(.callout).foregroundColor(.secondary)
                     }
                     .listRowBackground(Color.clear)
@@ -111,45 +114,59 @@ struct NetworkBrowserSheet: View {
         let isExpanded = expandedHost == server.host
         let shares = shareMap[server.host]
         let isLoading = loadingHosts.contains(server.host)
+        // #19 — resolving skeleton: name is still the IP while lookup runs
+        let isResolvingName = resolvingIPs.contains(server.host) && server.name == server.host
 
         VStack(alignment: .leading, spacing: 0) {
             EmptyView().onAppear {
-                // IP-only entries: resolve friendly name on first display
                 if server.name == server.host { resolveNameIfNeeded(ip: server.host) }
             }
+
             // Server header row
-            Button {
-                toggleExpand(server)
-            } label: {
+            Button { toggleExpand(server) } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "server.rack")
                         .foregroundColor(.accentColor)
                         .frame(width: 20)
+
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(server.name).fontWeight(.medium)
-                        if server.name != server.host {
+                        if isResolvingName {
+                            // #19 — skeleton placeholder while NetBIOS name resolves
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.secondary.opacity(0.2))
+                                .frame(width: 100, height: 12)
                             Text(server.host).font(.caption).foregroundColor(.secondary)
+                        } else {
+                            Text(server.name).fontWeight(.medium)
+                            if server.name != server.host {
+                                Text(server.host).font(.caption).foregroundColor(.secondary)
+                            }
                         }
                     }
+
                     Spacer()
+
                     if isLoading {
                         ProgressView().scaleEffect(0.65)
                     } else {
-                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        // #18 — animated chevron rotation
+                        Image(systemName: "chevron.right")
                             .font(.caption2).foregroundColor(.secondary)
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                            .animation(.easeInOut(duration: 0.18), value: isExpanded)
                     }
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
-            // Shares sub-rows
+            // Share sub-rows
             if isExpanded {
                 if let shares {
                     if shares.isEmpty {
                         Text("No accessible shares found")
                             .font(.caption).foregroundColor(.secondary)
-                            .padding(.leading, 30).padding(.top, 4)
+                            .padding(.leading, 34).padding(.top, 4)
                     } else {
                         ForEach(shares, id: \.self) { share in
                             Button {
@@ -160,14 +177,15 @@ struct NetworkBrowserSheet: View {
                                 HStack(spacing: 8) {
                                     Image(systemName: "folder")
                                         .font(.caption).foregroundColor(.secondary)
-                                        .frame(width: 20)
+                                        .frame(width: 16)
                                     Text(share)
                                     Spacer()
                                     Image(systemName: "plus.circle")
                                         .font(.caption).foregroundColor(.accentColor)
                                 }
-                                .padding(.leading, 10)
-                                .padding(.vertical, 3)
+                                // #20 — deeper indent for share rows
+                                .padding(.leading, 34)
+                                .padding(.vertical, 4)
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
@@ -177,6 +195,8 @@ struct NetworkBrowserSheet: View {
             }
         }
     }
+
+    // MARK: - Bottom bar
 
     private var bottomBar: some View {
         HStack(spacing: 12) {
@@ -193,9 +213,7 @@ struct NetworkBrowserSheet: View {
                 .help("Scan all IPs on this subnet for SMB servers (port 445)")
             }
             Spacer()
-            Button {
-                showManualEntry = true
-            } label: {
+            Button { showManualEntry = true } label: {
                 Label("Enter IP Manually…", systemImage: "keyboard")
             }
             .buttonStyle(.borderless)
@@ -203,6 +221,8 @@ struct NetworkBrowserSheet: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
     }
+
+    // MARK: - Manual entry sheet
 
     private var manualEntrySheet: some View {
         VStack(spacing: 12) {
@@ -233,12 +253,8 @@ struct NetworkBrowserSheet: View {
     // MARK: - Logic
 
     private func toggleExpand(_ server: (name: String, host: String)) {
-        if expandedHost == server.host {
-            expandedHost = nil
-            return
-        }
+        if expandedHost == server.host { expandedHost = nil; return }
         expandedHost = server.host
-        // Only enumerate if we haven't yet
         guard shareMap[server.host] == nil && !loadingHosts.contains(server.host) else { return }
         loadingHosts.insert(server.host)
         Task {

@@ -21,15 +21,62 @@ struct ProfilesTabView: View {
         }
     }
 
-    // MARK: - Locked (free tier)
+    // MARK: - Locked (#25 — ghost preview behind frosted overlay)
 
     private var lockedView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "lock.fill").font(.largeTitle).foregroundColor(.secondary)
-            Text("Profiles are a Pro feature").fontWeight(.medium)
-            Text("Organise shares into Home, Office, and Travel profiles.")
-                .multilineTextAlignment(.center).foregroundColor(.secondary).font(.callout)
-                .frame(maxWidth: 300)
+        ZStack {
+            // Ghost profiles rendered behind the blur
+            VStack(alignment: .leading, spacing: 0) {
+                List {
+                    HStack {
+                        Image(systemName: "circle").foregroundColor(.secondary)
+                        Text("All Shares")
+                    }
+                    ForEach(["Home", "Office", "Travel"], id: \.self) { name in
+                        HStack {
+                            Image(systemName: "circle").foregroundColor(.secondary)
+                            Text(name)
+                        }
+                    }
+                }
+                .listStyle(.bordered(alternatesRowBackgrounds: true))
+                .disabled(true)
+
+                HStack(spacing: 6) {
+                    TextField("New profile name", text: .constant(""))
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(true)
+                    Button("Add") {}.disabled(true)
+                }
+                .padding(8)
+            }
+            .blur(radius: 4)
+            .allowsHitTesting(false)
+
+            // Frosted panel on top
+            VStack(spacing: 12) {
+                Image(systemName: "person.2.badge.key.fill")
+                    .font(.system(size: 30))
+                    .foregroundColor(.secondary)
+
+                Text("Profiles")
+                    .font(.headline)
+
+                Text("Switch between Home, Office, and Travel profiles — mounting only the shares you need for each context.")
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.secondary)
+                    .font(.callout)
+                    .frame(maxWidth: 260)
+
+                Text("Available in Anchor Pro")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 2)
+            }
+            .padding(24)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(color: .black.opacity(0.08), radius: 16, x: 0, y: 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -49,7 +96,6 @@ struct ProfilesTabView: View {
                     Task { await saveConfig() }
                 }
             )) {
-                // "All" pseudo-profile
                 HStack {
                     Image(systemName: config.activeProfile == nil ? "checkmark" : "circle")
                         .foregroundColor(config.activeProfile == nil ? .accentColor : .secondary)
@@ -83,8 +129,6 @@ struct ProfilesTabView: View {
                     let name = newProfileName.trimmingCharacters(in: .whitespaces)
                     guard !name.isEmpty else { return }
                     newProfileName = ""
-                    // Profile is just a name; shares are assigned in ShareEditSheet.
-                    // Set it as active immediately.
                     config = AnchorConfig(
                         shares: config.shares,
                         activeProfile: name,
@@ -103,15 +147,13 @@ struct ProfilesTabView: View {
 
     @MainActor
     private func loadConfig() async {
-        let configStore = ConfigStore()
-        config = (try? await configStore.load()) ?? AnchorConfig()
+        config = (try? await ConfigStore().load()) ?? AnchorConfig()
     }
 
     @MainActor
     private func saveConfig() async {
-        let configStore = ConfigStore()
         let snapshot = config
-        try? await configStore.save(snapshot)
+        try? await ConfigStore().save(snapshot)
         MountNotifications.postConfigUpdated()
     }
 }

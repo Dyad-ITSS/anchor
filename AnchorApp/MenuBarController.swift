@@ -3,14 +3,13 @@ import AnchorCore
 
 final class MenuBarController {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-    private var shareStates: [UUID: MountState] = [:]
+    private var mountEvents: [UUID: MountEvent] = [:]
     private var config: AnchorConfig = AnchorConfig()
     private var notificationObserver: NSObjectProtocol?
 
     init() {
-        loadConfig()          // synchronous: config + initial states + menu + icon
-        observeStateChanges() // registers distributed notification observer
-        // Use explicit click handler — more reliable than statusItem.menu on unsigned builds
+        loadConfig()
+        observeStateChanges()
         statusItem.button?.action = #selector(statusButtonClicked(_:))
         statusItem.button?.target = self
         statusItem.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
@@ -18,100 +17,139 @@ final class MenuBarController {
 
     @objc private func statusButtonClicked(_ sender: NSStatusBarButton) {
         guard let menu = statusItem.menu else { return }
-        // Detach menu briefly so button click doesn't fight with menu display
         statusItem.menu = nil
-        menu.popUp(positioning: nil,
-                   at: NSPoint(x: 0, y: sender.bounds.height + 4),
-                   in: sender)
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height + 4), in: sender)
         statusItem.menu = menu
     }
 
-    private func updateIcon() {
-        let activeShares = config.activeShares
-        let allMounted = !activeShares.isEmpty && activeShares.allSatisfy { shareStates[$0.id] == .mounted }
+    // MARK: - Icon
 
-        // Use fill variant when everything is mounted, outline otherwise.
-        // Never set contentTintColor — template icons auto-adapt (white/dark mode)
-        // and tinting breaks visibility on the pressed dark button background.
-        let symbolName = allMounted
-            ? "externaldrive.connected.to.line.below.fill"
-            : "externaldrive.connected.to.line.below"
+    private func updateIcon() {
+        let active = config.activeShares
+        let states = active.compactMap { mountEvents[$0.id]?.state }
+        let allMounted    = !active.isEmpty && states.allSatisfy { $0 == .mounted }
+        let anyError      = states.contains { $0 == .unreachable || $0 == .error }
+
+        let symbolName: String
+        if active.isEmpty {
+            symbolName = "externaldrive"
+        } else if allMounted {
+            symbolName = "externaldrive.connected.to.line.below.fill"
+        } else if anyError {
+            symbolName = "externaldrive.trianglebadge.exclamationmark"
+        } else {
+            symbolName = "externaldrive.connected.to.line.below"
+        }
+
         let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Anchor")
         image?.isTemplate = true
         statusItem.button?.image = image
         statusItem.button?.contentTintColor = nil
     }
 
+    // MARK: - Menu
+
     func buildMenu() {
         let menu = NSMenu()
+
         for share in config.activeShares {
-            let state = shareStates[share.id] ?? .unmounted
+            let event = mountEvents[share.id]
+            let state = event?.state ?? .unmounted
             let item = NSMenuItem()
-            item.attributedTitle = dotTitle(share.displayName, state: state)
+            item.attributedTitle = shareTitle(share, event: event, state: state)
             item.representedObject = share
-            item.action = #selector(openShare(_:))
+            item.action = state == .mounted ? #selector(openShare(_:)) : #selector(reconnectAll)
             item.target = self
             menu.addItem(item)
         }
+
         if !config.activeShares.isEmpty { menu.addItem(.separator()) }
-        let reconnect = NSMenuItem(title: "Reconnect All", action: #selector(reconnectAll), keyEquivalent: "r")
+
+        // Reconnect All — demoted visually
+        let reconnect = NSMenuItem()
+        let reconnectAttrs: [NSAttributedString.Key: Any] = [
+            .foregroundColor: NSColor.secondaryLabelColor,
+            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        ]
+        reconnect.attributedTitle = NSAttributedString(string: "Reconnect All", attributes: reconnectAttrs)
+        reconnect.action = #selector(reconnectAll)
+        reconnect.keyEquivalent = "r"
         reconnect.target = self
         menu.addItem(reconnect)
+
         let settings = NSMenuItem(title: "Open Anchor Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
+
         menu.addItem(.separator())
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         menu.addItem(NSMenuItem(title: "Anchor \(version)", action: nil, keyEquivalent: ""))
         menu.addItem(.separator())
+
         let quit = NSMenuItem(title: "Quit Anchor", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
         statusItem.menu = menu
     }
 
+    private func shareTitle(_ share: Share, event: MountEvent?, state: MountState) -> NSAttributedString {
+        // Dot color
+        let dotColor: NSColor
+        switch state {
+        case .mounted:             dotColor = .systemGreen
+        case .mounting:            dotColor = .systemYellow
+        case .unreachable, .error: dotColor = .systemRed
+        case .unmounted:           dotColor = NSColor.tertiaryLabelColor
+        }
+
+        let result = NSMutableAttributedString(string: "● ", attributes: [.foregroundColor: dotColor])
+
+        // Name — strikethrough on unreachable
+        var nameAttrs: [NSAttributedString.Key: Any] = [.foregroundColor: NSColor.labelColor]
+        if state == .unreachable || state == .error {
+            nameAttrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
+            nameAttrs[.foregroundColor] = NSColor.secondaryLabelColor
+        }
+        result.append(NSAttributedString(string: share.displayName, attributes: nameAttrs))
+
+        // Latency / route suffix for mounted shares
+        if state == .mounted, let event {
+            let isVPN = event.mountedHost == share.fallbackHost && share.fallbackHost != nil
+            let route = isVPN ? "VPN" : "LAN"
+            var suffix = "  \(route)"
+            if let ms = event.latencyMs, ms > 0 { suffix += " · \(ms)ms" }
+            result.append(NSAttributedString(string: suffix, attributes: [
+                .foregroundColor: isVPN ? NSColor.systemBlue : NSColor.systemGreen,
+                .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+            ]))
+        }
+
+        return result
+    }
+
+    // MARK: - Actions
+
     @objc private func openShare(_ sender: NSMenuItem) {
         guard let share = sender.representedObject as? Share else { return }
-        let path = "/Volumes/\(share.shareName)"
-        NSWorkspace.shared.open(URL(fileURLWithPath: path))
+        NSWorkspace.shared.open(URL(fileURLWithPath: "/Volumes/\(share.shareName)"))
     }
 
     @objc private func reconnectAll() { MountNotifications.postConfigUpdated() }
 
-    @objc private func openSettings() {
-        SettingsWindowController.shared.show()
-    }
+    @objc private func openSettings() { SettingsWindowController.shared.show() }
+
+    // MARK: - Config loading
 
     private func loadConfig() {
         config = ConfigStore().loadSync()
-        for share in config.activeShares where shareStates[share.id] == nil {
+        for share in config.activeShares where mountEvents[share.id] == nil {
             if isMountPoint("/Volumes/\(share.shareName)") {
-                shareStates[share.id] = .mounted
+                mountEvents[share.id] = MountEvent(shareID: share.id, state: .mounted, mountedHost: share.host)
             }
         }
         buildMenu()
         updateIcon()
     }
 
-    private func dotTitle(_ name: String, state: MountState) -> NSAttributedString {
-        let dotColor: NSColor
-        switch state {
-        case .mounted:             dotColor = .systemGreen
-        case .mounting:            dotColor = .systemYellow
-        case .unreachable, .error: dotColor = .systemRed
-        case .unmounted:           dotColor = .systemGray
-        }
-        let result = NSMutableAttributedString(
-            string: "● ",
-            attributes: [.foregroundColor: dotColor]
-        )
-        result.append(NSAttributedString(
-            string: name,
-            attributes: [.foregroundColor: NSColor.labelColor]
-        ))
-        return result
-    }
-
-    /// Returns true if path is a mount point (different device than its parent).
     private func isMountPoint(_ path: String) -> Bool {
         let parent = (path as NSString).deletingLastPathComponent
         guard let dev  = (try? FileManager.default.attributesOfFileSystem(forPath: path))?[.systemNumber] as? Int,
@@ -122,7 +160,7 @@ final class MenuBarController {
 
     private func observeStateChanges() {
         notificationObserver = MountNotifications.observeStateChanged { [weak self] event in
-            self?.shareStates[event.shareID] = event.state
+            self?.mountEvents[event.shareID] = event
             self?.buildMenu()
             self?.updateIcon()
         }

@@ -66,7 +66,7 @@ struct SettingsView: View {
             }
             .listStyle(.sidebar)
             .modifier(HideSidebarToggle())
-            .navigationSplitViewColumnWidth(min: 160, ideal: 190)
+            .navigationSplitViewColumnWidth(min: 140, ideal: 160)
             .background(VisualEffectView(material: .sidebar, blendingMode: .behindWindow))
         } detail: {
             switch selectedPane {

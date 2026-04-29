@@ -6,7 +6,6 @@ import AnchorCore
 final class MountEngine {
     private let session = MountSession()
 
-    /// Process all active shares concurrently.
     func processShares(_ config: AnchorConfig, isPro: Bool) async {
         await withTaskGroup(of: Void.self) { group in
             for share in config.activeShares {
@@ -22,16 +21,21 @@ final class MountEngine {
 
         switch currentState {
         case .mounted:
-            let primaryUp = await HostProbe.isReachable(share.host)
+            let (primaryUp, latencyMs) = await HostProbe.isReachable(share.host)
             if primaryUp {
-                // Primary still reachable — nothing to do.
+                // Refresh latency on health check
+                MountNotifications.postStateChanged(
+                    MountEvent(shareID: share.id, state: .mounted, mountedHost: share.host, latencyMs: latencyMs)
+                )
                 return
             }
             // Primary is down while we're mounted.
-            if isPro {
-                let fallbackUp = await checkFallback(share)
+            if isPro, let fallback = share.fallbackHost {
+                let (fallbackUp, fbLatency) = await HostProbe.isReachable(fallback)
                 if fallbackUp {
-                    // Fallback is alive — leave the mount in place.
+                    MountNotifications.postStateChanged(
+                        MountEvent(shareID: share.id, state: .mounted, mountedHost: fallback, latencyMs: fbLatency)
+                    )
                     return
                 }
             }
@@ -43,44 +47,33 @@ final class MountEngine {
             }
 
         case .unmounted, .unreachable, .error:
-            // Pre-flight: detect shares already mounted by another agent (e.g. launchd script).
-            // Use st_dev comparison — most reliable mount-point test.
+            // Pre-flight: detect shares already mounted by any agent (launchd script, etc.)
             if isMountPoint("/Volumes/\(share.shareName)") {
+                let (_, latencyMs) = await HostProbe.isReachable(share.host)
                 await session.setState(.mounted, for: share.id)
                 MountNotifications.postStateChanged(
-                    MountEvent(shareID: share.id, state: .mounted, mountedHost: share.host)
+                    MountEvent(shareID: share.id, state: .mounted, mountedHost: share.host, latencyMs: latencyMs)
                 )
                 return
             }
-            let primaryUp = await HostProbe.isReachable(share.host)
+            let (primaryUp, _) = await HostProbe.isReachable(share.host)
             if primaryUp {
                 await mount(share, usingHost: share.host)
                 return
             }
             if isPro, let fallbackHost = share.fallbackHost {
-                let fallbackUp = await HostProbe.isReachable(fallbackHost)
+                let (fallbackUp, _) = await HostProbe.isReachable(fallbackHost)
                 if fallbackUp {
                     await mount(share, usingHost: fallbackHost)
                     return
                 }
             }
-            // Neither host is reachable.
             await session.setState(.unreachable, for: share.id)
-            MountNotifications.postStateChanged(
-                MountEvent(shareID: share.id, state: .unreachable)
-            )
+            MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .unreachable))
 
         case .mounting:
-            // Already in-progress — skip to avoid duplicate attempts.
             return
         }
-    }
-
-    // MARK: - Fallback check
-
-    private func checkFallback(_ share: Share) async -> Bool {
-        guard let fallbackHost = share.fallbackHost else { return false }
-        return await HostProbe.isReachable(fallbackHost)
     }
 
     // MARK: - Mount via NetFS
@@ -90,39 +83,29 @@ final class MountEngine {
         await session.setState(.mounting, for: share.id)
         MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .mounting))
 
+        let start = Date()
         let result = await withCheckedContinuation { (continuation: CheckedContinuation<Int32, Never>) in
             DispatchQueue.global(qos: .utility).async {
                 var mountPoints: Unmanaged<CFArray>?
-                let rc = NetFSMountURLSync(
-                    url as CFURL,
-                    nil,   // mountPath — nil = /Volumes
-                    nil,   // user — nil = use Keychain
-                    nil,   // password — nil = use Keychain
-                    nil,   // open options
-                    nil,   // mount options
-                    &mountPoints
-                )
+                let rc = NetFSMountURLSync(url as CFURL, nil, nil, nil, nil, nil, &mountPoints)
                 mountPoints?.release()
                 continuation.resume(returning: rc)
             }
         }
+        let latencyMs = Int(Date().timeIntervalSince(start) * 1000)
 
         // EEXIST (17): volume already mounted at that path — treat as success.
         let newState: MountState = (result == 0 || result == EEXIST) ? .mounted : .error
         await session.setState(newState, for: share.id)
         MountNotifications.postStateChanged(
-            MountEvent(
-                shareID: share.id,
-                state: newState,
-                mountedHost: newState == .mounted ? host : nil
-            )
+            MountEvent(shareID: share.id, state: newState,
+                       mountedHost: newState == .mounted ? host : nil,
+                       latencyMs: newState == .mounted ? latencyMs : nil)
         )
     }
 
     // MARK: - Mount point detection
 
-    /// Returns true if `path` is a mount point (different device ID from its parent).
-    /// Uses FileManager to avoid the stat()/stat struct name collision in Swift.
     private func isMountPoint(_ path: String) -> Bool {
         let parent = (path as NSString).deletingLastPathComponent
         guard let dev  = (try? FileManager.default.attributesOfFileSystem(forPath: path))?[.systemNumber] as? Int,
