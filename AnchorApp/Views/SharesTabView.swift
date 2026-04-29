@@ -1,5 +1,5 @@
-import SwiftUI
 import AnchorCore
+import SwiftUI
 
 private let freeShareLimit = 3
 
@@ -15,7 +15,7 @@ struct SharesTabView: View {
     @State private var notificationToken: NSObjectProtocol? = nil
 
     private var detectedVPN: String? {
-        let v = UserDefaults(suiteName: "group.com.yourname.anchor")?.string(forKey: "detectedVPN") ?? "None"
+        let v = UserDefaults(suiteName: "group.com.zieseniss.anchor")?.string(forKey: "detectedVPN") ?? "None"
         return v == "None" ? nil : v
     }
 
@@ -111,7 +111,7 @@ struct SharesTabView: View {
                 }
                 .tag(share.id)
                 .onTapGesture(count: 2) { editingShare = share }
-                .contextMenu {                                          // #10 right-click
+                .contextMenu { // #10 right-click
                     Button("Edit…") { editingShare = share }
                     if state == .mounted {
                         Button("Open in Finder") {
@@ -123,7 +123,7 @@ struct SharesTabView: View {
                 }
             }
         }
-        .listStyle(.inset)                                             // #5
+        .listStyle(.inset) // #5
     }
 
     // MARK: - Bottom toolbar
@@ -269,10 +269,10 @@ struct StatusDot: View {
 
     var color: Color {
         switch state {
-        case .mounted:             return .green
-        case .mounting:            return .yellow
+        case .mounted: return .green
+        case .mounting: return .yellow
         case .unreachable, .error: return .red
-        case .unmounted:           return Color(white: 0.4)
+        case .unmounted: return Color(white: 0.4)
         }
     }
 

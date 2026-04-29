@@ -1,6 +1,6 @@
 name: Anchor
 options:
-  bundleIdPrefix: com.yourname
+  bundleIdPrefix: com.zieseniss
   deploymentTarget:
     macOS: "13.0"
   xcodeVersion: "15"
@@ -40,16 +40,16 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.files.user-selected.read-write: true
-        com.apple.application-identifier: $(AppIdentifierPrefix)com.yourname.anchor
+        com.apple.application-identifier: $(AppIdentifierPrefix)com.zieseniss.anchor
         com.apple.security.application-groups:
-          - group.com.yourname.anchor
+          - group.com.zieseniss.anchor
     dependencies:
       - package: AnchorCore
       - package: RevenueCat
         product: RevenueCat
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.yourname.anchor
+        PRODUCT_BUNDLE_IDENTIFIER: com.zieseniss.anchor
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
 
@@ -70,14 +70,14 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
-        com.apple.application-identifier: $(AppIdentifierPrefix)com.yourname.anchor.AnchorHelper
+        com.apple.application-identifier: $(AppIdentifierPrefix)com.zieseniss.anchor.AnchorHelper
         com.apple.security.application-groups:
-          - group.com.yourname.anchor
+          - group.com.zieseniss.anchor
     dependencies:
       - package: AnchorCore
       - sdk: NetFS.framework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.yourname.anchor.AnchorHelper
+        PRODUCT_BUNDLE_IDENTIFIER: com.zieseniss.anchor.AnchorHelper
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""

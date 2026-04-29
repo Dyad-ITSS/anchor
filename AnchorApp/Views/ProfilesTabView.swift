@@ -1,11 +1,11 @@
-import SwiftUI
 import AnchorCore
+import SwiftUI
 
 struct ProfilesTabView: View {
     @EnvironmentObject var entitlement: EntitlementManager
     @EnvironmentObject var store: StoreManager
 
-    @State private var config: AnchorConfig = AnchorConfig()
+    @State private var config: AnchorConfig = .init()
     @State private var newProfileName: String = ""
 
     private var allProfiles: [String] {
@@ -101,7 +101,7 @@ struct ProfilesTabView: View {
                         .foregroundColor(config.activeProfile == nil ? .accentColor : .secondary)
                     Text("All Shares")
                 }
-                .tag(Optional<String>.none)
+                .tag(String?.none)
                 .onTapGesture {
                     config = AnchorConfig(
                         shares: config.shares,

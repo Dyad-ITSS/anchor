@@ -1,10 +1,10 @@
-import AppKit
 import AnchorCore
+import AppKit
 
 final class MenuBarController {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private var mountEvents: [UUID: MountEvent] = [:]
-    private var config: AnchorConfig = AnchorConfig()
+    private var config: AnchorConfig = .init()
     private var notificationObserver: NSObjectProtocol?
 
     init() {
@@ -27,8 +27,8 @@ final class MenuBarController {
     private func updateIcon() {
         let active = config.activeShares
         let states = active.compactMap { mountEvents[$0.id]?.state }
-        let allMounted    = !active.isEmpty && states.allSatisfy { $0 == .mounted }
-        let anyError      = states.contains { $0 == .unreachable || $0 == .error }
+        let allMounted = !active.isEmpty && states.allSatisfy { $0 == .mounted }
+        let anyError = states.contains { $0 == .unreachable || $0 == .error }
 
         let symbolName: String
         if active.isEmpty {
@@ -70,7 +70,7 @@ final class MenuBarController {
         let reconnect = NSMenuItem()
         let reconnectAttrs: [NSAttributedString.Key: Any] = [
             .foregroundColor: NSColor.secondaryLabelColor,
-            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+            .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
         ]
         reconnect.attributedTitle = NSAttributedString(string: "Reconnect All", attributes: reconnectAttrs)
         reconnect.action = #selector(reconnectAll)
@@ -91,16 +91,20 @@ final class MenuBarController {
 
     // MARK: - Actions
 
-    // MARK: - Actions
-
     @objc private func openShare(_ sender: NSMenuItem) {
         guard let share = sender.representedObject as? Share else { return }
         NSWorkspace.shared.open(URL(fileURLWithPath: "/Volumes/\(share.shareName)"))
     }
 
-    @objc private func reconnectAll() { MountNotifications.postConfigUpdated() }
+    @objc private func reconnectAll() {
+        MountNotifications.postConfigUpdated()
+    }
 
-    @objc private func openSettings() { SettingsWindowController.shared.show() }
+    @objc private func openSettings() {
+        DispatchQueue.main.async {
+            SettingsWindowController.shared.show()
+        }
+    }
 
     // MARK: - Config loading
 
@@ -117,7 +121,7 @@ final class MenuBarController {
 
     private func isMountPoint(_ path: String) -> Bool {
         let parent = (path as NSString).deletingLastPathComponent
-        guard let dev  = (try? FileManager.default.attributesOfFileSystem(forPath: path))?[.systemNumber] as? Int,
+        guard let dev = (try? FileManager.default.attributesOfFileSystem(forPath: path))?[.systemNumber] as? Int,
               let pDev = (try? FileManager.default.attributesOfFileSystem(forPath: parent))?[.systemNumber] as? Int
         else { return false }
         return dev != pDev
@@ -143,10 +147,10 @@ private final class ShareMenuItemView: NSView {
 
     init(share: Share, event: MountEvent?, state: MountState) {
         switch state {
-        case .mounted:             dotColor = .systemGreen
-        case .mounting:            dotColor = .systemYellow
+        case .mounted: dotColor = .systemGreen
+        case .mounting: dotColor = .systemYellow
         case .unreachable, .error: dotColor = .systemRed
-        case .unmounted:           dotColor = .tertiaryLabelColor
+        case .unmounted: dotColor = .tertiaryLabelColor
         }
 
         let isVPN = state == .mounted &&
@@ -171,9 +175,9 @@ private final class ShareMenuItemView: NSView {
         nameLabel.textColor = .labelColor
         if state == .unreachable || state == .error {
             let s = NSMutableAttributedString(string: share.displayName,
-                attributes: [.font: NSFont.menuFont(ofSize: 0),
-                             .foregroundColor: NSColor.secondaryLabelColor,
-                             .strikethroughStyle: NSUnderlineStyle.single.rawValue])
+                                              attributes: [.font: NSFont.menuFont(ofSize: 0),
+                                                           .foregroundColor: NSColor.secondaryLabelColor,
+                                                           .strikethroughStyle: NSUnderlineStyle.single.rawValue])
             nameLabel.attributedStringValue = s
         } else {
             nameLabel.stringValue = share.displayName
@@ -203,7 +207,10 @@ private final class ShareMenuItemView: NSView {
         ])
     }
 
-    required init?(coder: NSCoder) { fatalError() }
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError()
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         let highlighted = enclosingMenuItem?.isHighlighted == true

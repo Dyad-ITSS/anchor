@@ -1,7 +1,8 @@
+import AnchorCore
 import AppKit
 import SwiftUI
-import AnchorCore
 
+@MainActor
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     static let shared = SettingsWindowController()
 
@@ -9,8 +10,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let hosting = NSHostingView(rootView:
             SettingsView()
                 .environmentObject(EntitlementManager.shared)
-                .environmentObject(StoreManager.shared)
-        )
+                .environmentObject(StoreManager.shared))
         let win = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 660, height: 480),
             styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
@@ -28,7 +28,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         win.delegate = self
     }
 
-    required init?(coder: NSCoder) { fatalError("not used") }
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("not used")
+    }
 
     func show() {
         NSApp.setActivationPolicy(.regular)
@@ -48,7 +51,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     // MARK: NSWindowDelegate
 
-    func windowWillClose(_ notification: Notification) {
+    func windowWillClose(_: Notification) {
         NSApp.setActivationPolicy(.accessory)
     }
 }

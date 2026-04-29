@@ -1,6 +1,6 @@
+import Darwin
 import Foundation
 import Network
-import Darwin
 
 /// Scans the local /24 subnet for hosts with port 445 open.
 /// Uses NWConnection (works in sandbox with network.client entitlement).
@@ -81,12 +81,12 @@ final class SubnetScanner: ObservableObject {
                 inet_ntop(AF_INET, &$0.pointee.sin_addr, &buf, socklen_t(INET_ADDRSTRLEN))
             }
             let ip = String(cString: buf)
-            guard !ip.hasPrefix("127.") && !ip.hasPrefix("169.254.") else { continue }
+            guard !ip.hasPrefix("127."), !ip.hasPrefix("169.254.") else { continue }
 
             let parts = ip.split(separator: ".")
             guard parts.count == 4 else { continue }
             let base = "\(parts[0]).\(parts[1]).\(parts[2])."
-            return (1...254).map { "\(base)\($0)" }
+            return (1 ... 254).map { "\(base)\($0)" }
         }
         return nil
     }

@@ -19,7 +19,6 @@ public enum ConfigStoreError: Error {
 /// Declared as an `actor` so that concurrent reads/writes from AnchorApp and
 /// AnchorHelper are serialised without manual locking.
 public actor ConfigStore {
-
     // MARK: Properties
 
     private let fileURL: URL
@@ -46,10 +45,10 @@ public actor ConfigStore {
             try? FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
             url = appSupport.appendingPathComponent("config.json")
         }
-        self.fileURL = url
+        fileURL = url
         let enc = JSONEncoder()
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-        self.encoder = enc
+        encoder = enc
     }
 
     /// Test-friendly initialiser — uses an explicit file URL.
@@ -59,7 +58,7 @@ public actor ConfigStore {
         self.fileURL = fileURL
         let enc = JSONEncoder()
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-        self.encoder = enc
+        encoder = enc
     }
 
     // MARK: Public API
@@ -89,7 +88,9 @@ public actor ConfigStore {
     }
 
     /// The file URL being used by this store instance (for debugging).
-    public var resolvedFileURL: URL { fileURL }
+    public var resolvedFileURL: URL {
+        fileURL
+    }
 
     // MARK: - Synchronous helpers (for UI layer — avoids actor hop timing issues)
 

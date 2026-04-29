@@ -1,0 +1,37 @@
+included:
+  - AnchorApp
+  - AnchorHelper
+  - AnchorCore/Sources
+
+excluded:
+  - build
+  - AnchorCore/.build
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - closure_spacing
+  - overridden_super_call
+  - redundant_nil_coalescing
+  - private_outlet
+  - attributes
+  - operator_usage_whitespace
+
+disabled_rules:
+  - trailing_whitespace     # SwiftFormat handles this
+  - line_length             # views legitimately get long
+
+identifier_name:
+  min_length: 1             # allow v, k, f etc in local scope
+
+function_body_length:
+  warning: 80
+  error: 120
+
+file_length:
+  warning: 400
+  error: 800
+
+type_body_length:
+  warning: 300
+  error: 500

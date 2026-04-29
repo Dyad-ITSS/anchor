@@ -1,6 +1,6 @@
+import AnchorCore
 import Foundation
 import NetFS
-import AnchorCore
 
 /// Processes all shares in a config — mounting reachable ones, unmounting unreachable ones.
 final class MountEngine {
@@ -79,6 +79,16 @@ final class MountEngine {
     // MARK: - Mount via NetFS
 
     private func mount(_ share: Share, usingHost host: String) async {
+        // Guard against double-mounting: check `mount` output for this host+share before calling NetFS.
+        if isAlreadyMounted(host: host, shareName: share.shareName) {
+            let (_, latencyMs) = await HostProbe.isReachable(host)
+            await session.setState(.mounted, for: share.id)
+            MountNotifications.postStateChanged(
+                MountEvent(shareID: share.id, state: .mounted, mountedHost: host, latencyMs: latencyMs)
+            )
+            return
+        }
+
         guard let url = share.smbURL(host: host) else { return }
         await session.setState(.mounting, for: share.id)
         MountNotifications.postStateChanged(MountEvent(shareID: share.id, state: .mounting))
@@ -108,10 +118,24 @@ final class MountEngine {
 
     private func isMountPoint(_ path: String) -> Bool {
         let parent = (path as NSString).deletingLastPathComponent
-        guard let dev  = (try? FileManager.default.attributesOfFileSystem(forPath: path))?[.systemNumber] as? Int,
+        guard let dev = (try? FileManager.default.attributesOfFileSystem(forPath: path))?[.systemNumber] as? Int,
               let pDev = (try? FileManager.default.attributesOfFileSystem(forPath: parent))?[.systemNumber] as? Int
         else { return false }
         return dev != pDev
+    }
+
+    /// Checks `mount` output for an existing SMB mount of host/shareName, catching renamed variants like /Volumes/dev-1.
+    private func isAlreadyMounted(host: String, shareName: String) -> Bool {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/sbin/mount")
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        guard (try? task.run()) != nil else { return false }
+        task.waitUntilExit()
+        let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        // Mount lines look like: //user@host/shareName on /Volumes/... (smbfs, ...)
+        let needle = "\(host)/\(shareName) on "
+        return output.contains(needle)
     }
 
     // MARK: - Unmount via diskutil

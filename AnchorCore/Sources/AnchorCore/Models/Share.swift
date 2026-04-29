@@ -4,12 +4,12 @@ import Foundation
 public struct Share: Codable, Identifiable, Equatable, Sendable {
     public let id: UUID
     public var displayName: String
-    public var host: String              // Primary (LAN) IP or hostname
+    public var host: String // Primary (LAN) IP or hostname
     public var shareName: String
-    public var username: String?         // nil = use Keychain default for host
-    public var port: Int?                // nil = 445 (SMB default)
+    public var username: String? // nil = use Keychain default for host
+    public var port: Int? // nil = 445 (SMB default)
     public var unmountWhenUnreachable: Bool
-    public var fallbackHost: String?     // Mesh VPN IP or FQDN (Pro only — nil in free tier)
+    public var fallbackHost: String? // Mesh VPN IP or FQDN (Pro only — nil in free tier)
     public var profiles: Set<String>
 
     public init(

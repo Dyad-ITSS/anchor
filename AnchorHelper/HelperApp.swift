@@ -1,6 +1,6 @@
+import AnchorCore
 import Foundation
 import UserNotifications
-import AnchorCore
 
 @MainActor
 final class HelperApp {
@@ -42,7 +42,7 @@ final class HelperApp {
     private func reloadAndMount() async {
         do {
             isPro = ProKeychain.isProUnlocked()
-            _ = VPNDetector.detect()  // writes detected VPN to shared UserDefaults
+            _ = VPNDetector.detect() // writes detected VPN to shared UserDefaults
             let config = try await configStore.load()
             await mountEngine.processShares(config, isPro: isPro)
         } catch {
@@ -58,14 +58,14 @@ final class HelperApp {
             let prev = self.previousStates[event.shareID]
             self.previousStates[event.shareID] = event.state
 
-            guard self.isPro else { return }  // health notifications are Pro only
+            guard self.isPro else { return } // health notifications are Pro only
 
-            if prev == .mounted && event.state == .unreachable {
+            if prev == .mounted, event.state == .unreachable {
                 self.postSystemNotification(
                     title: "Share Disconnected",
                     body: "A share went offline. Anchor will reconnect automatically."
                 )
-            } else if prev == .unreachable && event.state == .mounted {
+            } else if prev == .unreachable, event.state == .mounted {
                 self.postSystemNotification(
                     title: "Share Reconnected",
                     body: "Your share is back online."

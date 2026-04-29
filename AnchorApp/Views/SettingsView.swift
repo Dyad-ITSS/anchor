@@ -1,19 +1,20 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
-// True behind-window vibrancy — matches the native macOS sidebar look.
+/// True behind-window vibrancy — matches the native macOS sidebar look.
 struct VisualEffectView: NSViewRepresentable {
     var material: NSVisualEffectView.Material = .sidebar
     var blendingMode: NSVisualEffectView.BlendingMode = .behindWindow
 
-    func makeNSView(context: Context) -> NSVisualEffectView {
+    func makeNSView(context _: Context) -> NSVisualEffectView {
         let v = NSVisualEffectView()
         v.material = material
         v.blendingMode = blendingMode
         v.state = .active
         return v
     }
-    func updateNSView(_ v: NSVisualEffectView, context: Context) {
+
+    func updateNSView(_ v: NSVisualEffectView, context _: Context) {
         v.material = material
         v.blendingMode = blendingMode
     }
@@ -24,22 +25,22 @@ private enum Pane: String, Hashable, CaseIterable {
 
     var label: String {
         switch self {
-        case .shares:   return "Shares"
+        case .shares: return "Shares"
         case .profiles: return "Profiles"
-        case .about:    return "About"
+        case .about: return "About"
         }
     }
 
     var icon: String {
         switch self {
-        case .shares:   return "externaldrive.connected.to.line.below"
+        case .shares: return "externaldrive.connected.to.line.below"
         case .profiles: return "person.2"
-        case .about:    return "info.circle"
+        case .about: return "info.circle"
         }
     }
 }
 
-// Hides the sidebar toggle button. Available macOS 14+; no-op on 13.
+/// Hides the sidebar toggle button. Available macOS 14+; no-op on 13.
 private struct HideSidebarToggle: ViewModifier {
     func body(content: Content) -> some View {
         if #available(macOS 14, *) {
@@ -70,10 +71,10 @@ struct SettingsView: View {
             .background(VisualEffectView(material: .sidebar, blendingMode: .behindWindow))
         } detail: {
             switch selectedPane {
-            case .shares:   SharesTabView()
+            case .shares: SharesTabView()
             case .profiles: ProfilesTabView()
-            case .about:    AboutTabView()
-            case nil:       SharesTabView()
+            case .about: AboutTabView()
+            case nil: SharesTabView()
             }
         }
     }

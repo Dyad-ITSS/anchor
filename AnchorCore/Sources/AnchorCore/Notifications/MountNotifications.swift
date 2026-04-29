@@ -1,19 +1,19 @@
 import Foundation
 
 public enum MountNotifications {
-    // TODO: Replace com.yourname.anchor with the real bundle ID before shipping
     /// Posted by AnchorHelper when any share's MountState changes.
-    public static let stateChanged = "com.yourname.anchor.mountStateChanged"
+    public static let stateChanged = "com.zieseniss.anchor.mountStateChanged"
 
     /// Posted by AnchorApp when config is updated (signals helper to reload).
-    public static let configUpdated = "com.yourname.anchor.configUpdated"
+    public static let configUpdated = "com.zieseniss.anchor.configUpdated"
 
     // MARK: - Posting (helper side)
 
     /// Encodes the MountEvent as JSON and posts via DistributedNotificationCenter.
     public static func postStateChanged(_ event: MountEvent) {
         guard let data = try? JSONEncoder().encode(event),
-              let json = String(data: data, encoding: .utf8) else {
+              let json = String(data: data, encoding: .utf8)
+        else {
             return
         }
         DistributedNotificationCenter.default().postNotificationName(
@@ -36,7 +36,8 @@ public enum MountNotifications {
         ) { note in
             guard let json = note.object as? String,
                   let data = json.data(using: .utf8),
-                  let event = try? JSONDecoder().decode(MountEvent.self, from: data) else {
+                  let event = try? JSONDecoder().decode(MountEvent.self, from: data)
+            else {
                 return
             }
             handler(event)

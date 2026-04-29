@@ -1,7 +1,7 @@
-import SwiftUI
 import AnchorCore
-import Network
 import AppKit
+import Network
+import SwiftUI
 
 enum TestState: Equatable {
     case idle
@@ -11,7 +11,7 @@ enum TestState: Equatable {
     case skipped
 }
 
-// Fixes macOS SwiftUI paste-not-rendering bug (NativeTextField uses AppKit delegate).
+/// Fixes macOS SwiftUI paste-not-rendering bug (NativeTextField uses AppKit delegate).
 private struct NativeTextField: NSViewRepresentable {
     let placeholder: String
     @Binding var text: String
@@ -27,17 +27,22 @@ private struct NativeTextField: NSViewRepresentable {
         return f
     }
 
-    func updateNSView(_ v: NSTextField, context: Context) {
+    func updateNSView(_ v: NSTextField, context _: Context) {
         if v.stringValue != text { v.stringValue = text }
         v.isEditable = !isDisabled
         v.isEnabled = !isDisabled
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text)
+    }
 
     class Coordinator: NSObject, NSTextFieldDelegate {
         @Binding var text: String
-        init(text: Binding<String>) { _text = text }
+        init(text: Binding<String>) {
+            _text = text
+        }
+
         func controlTextDidChange(_ obj: Notification) {
             guard let f = obj.object as? NSTextField else { return }
             text = f.stringValue
@@ -45,7 +50,7 @@ private struct NativeTextField: NSViewRepresentable {
     }
 }
 
-// #12 — Sentence-case label + native field (replaces uppercase style)
+/// #12 — Sentence-case label + native field (replaces uppercase style)
 private struct FieldRow: View {
     let label: String
     let placeholder: String
@@ -84,7 +89,7 @@ struct ShareEditSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     private var detectedVPN: String? {
-        UserDefaults(suiteName: "group.com.yourname.anchor")?.string(forKey: "detectedVPN")
+        UserDefaults(suiteName: "group.com.zieseniss.anchor")?.string(forKey: "detectedVPN")
     }
 
     init(share: Share?,
@@ -92,7 +97,7 @@ struct ShareEditSheet: View {
          prefilledShareName: String = "",
          prefilledDisplayName: String = "",
          onSave: @escaping (Share) -> Void) {
-        self.existingShare = share
+        existingShare = share
         self.onSave = onSave
         _displayName = State(initialValue: share?.displayName ?? prefilledDisplayName)
         _host = State(initialValue: share?.host ?? prefilledHost)
@@ -104,8 +109,8 @@ struct ShareEditSheet: View {
 
     private var isValid: Bool {
         !displayName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !host.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !shareName.trimmingCharacters(in: .whitespaces).isEmpty
+            !host.trimmingCharacters(in: .whitespaces).isEmpty &&
+            !shareName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     var body: some View {
@@ -119,7 +124,6 @@ struct ShareEditSheet: View {
 
             // Form — no ScrollView (#16), fixed content fits in frame
             VStack(alignment: .leading, spacing: 12) {
-
                 FieldRow(label: "Display name", placeholder: "e.g. Mac Mini (dev)", text: $displayName)
 
                 HStack(spacing: 8) {
@@ -156,7 +160,7 @@ struct ShareEditSheet: View {
                         text: entitlement.isPro ? $fallbackHost : .constant(""),
                         isDisabled: !entitlement.isPro
                     )
-                    .help("Mesh VPN IP (e.g. 100.64.x.x) or hostname used when the LAN host is unreachable. Enter a Tailscale, NetBird, or ZeroTier address.")  // #13
+                    .help("Mesh VPN IP (e.g. 100.64.x.x) or hostname used when the LAN host is unreachable. Enter a Tailscale, NetBird, or ZeroTier address.") // #13
                 }
                 .padding(12)
                 .background(
@@ -361,7 +365,7 @@ private struct TestPathRow: View {
             case .testing:
                 ProgressView().scaleEffect(0.6)
                 Text("Testing…").font(.caption).foregroundColor(.secondary)
-            case .ok(let ms):
+            case let .ok(ms):
                 let color: Color = isVPN ? .blue : .green
                 Circle().fill(color).frame(width: 7, height: 7).shadow(color: color.opacity(0.5), radius: 2)
                 Text("Reachable · \(ms)ms").font(.caption).foregroundColor(color)

@@ -1,6 +1,6 @@
-import SwiftUI
-import AppKit
 import AnchorCore
+import AppKit
+import SwiftUI
 
 struct AboutTabView: View {
     @EnvironmentObject var entitlement: EntitlementManager
@@ -99,7 +99,7 @@ struct AboutTabView: View {
             get: { helperManager.isRegistered },
             set: { on in
                 if on { helperManager.registerIfNeeded() }
-                else  { helperManager.unregister() }
+                else { helperManager.unregister() }
             }
         )) {
             VStack(alignment: .leading, spacing: 2) {

@@ -1,17 +1,18 @@
-import Foundation
 import Darwin
+import Foundation
 
 /// Discovers SMB servers on the local network via Bonjour (_smb._tcp).
 /// Resolves the actual IPv4 address so deduplication with subnet scan works correctly.
 final class BonjourScanner: NSObject, ObservableObject {
-
     struct Server: Identifiable, Equatable {
         let id = UUID()
         /// Friendly computer name, e.g. "mikeai" (Bonjour service name).
         let name: String
         /// IP address (preferred) or .local hostname — used as the SMB host value.
         let host: String
-        static func == (lhs: Server, rhs: Server) -> Bool { lhs.host == rhs.host }
+        static func == (lhs: Server, rhs: Server) -> Bool {
+            lhs.host == rhs.host
+        }
     }
 
     @Published var servers: [Server] = []
@@ -67,13 +68,13 @@ final class BonjourScanner: NSObject, ObservableObject {
 }
 
 extension BonjourScanner: NetServiceBrowserDelegate {
-    func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+    func netServiceBrowser(_: NetServiceBrowser, didFind service: NetService, moreComing _: Bool) {
         pending.append(service)
         service.delegate = self
         service.resolve(withTimeout: 5)
     }
 
-    func netServiceBrowser(_ browser: NetServiceBrowser, didRemove service: NetService, moreComing: Bool) {
+    func netServiceBrowser(_: NetServiceBrowser, didRemove service: NetService, moreComing _: Bool) {
         pending.removeAll { $0 === service }
         DispatchQueue.main.async {
             self.servers.removeAll { $0.name == service.name }

@@ -5,4 +5,5 @@ Task { @MainActor in
     let app = HelperApp()
     await app.run()
 }
+
 RunLoop.main.run()

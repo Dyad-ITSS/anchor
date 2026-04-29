@@ -1,10 +1,10 @@
-import StoreKit
 import AnchorCore
+import StoreKit
 
 @MainActor
 final class StoreManager: ObservableObject {
     static let shared = StoreManager()
-    static let proProductID = "com.yourname.anchor.pro"
+    static let proProductID = "com.zieseniss.anchor.pro"
 
     @Published private(set) var proProduct: Product?
     @Published private(set) var isPurchasing = false
@@ -28,7 +28,7 @@ final class StoreManager: ObservableObject {
         do {
             let result = try await product.purchase()
             switch result {
-            case .success(let verification):
+            case let .success(verification):
                 let transaction = try verification.payloadValue
                 await transaction.finish()
                 ProKeychain.unlock(token: transaction.id.description)

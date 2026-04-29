@@ -1,5 +1,5 @@
-import SwiftUI
 import AnchorCore
+import SwiftUI
 
 struct NetworkBrowserSheet: View {
     let onAdd: (_ host: String, _ shareName: String, _ displayName: String) -> Void
@@ -255,7 +255,7 @@ struct NetworkBrowserSheet: View {
     private func toggleExpand(_ server: (name: String, host: String)) {
         if expandedHost == server.host { expandedHost = nil; return }
         expandedHost = server.host
-        guard shareMap[server.host] == nil && !loadingHosts.contains(server.host) else { return }
+        guard shareMap[server.host] == nil, !loadingHosts.contains(server.host) else { return }
         loadingHosts.insert(server.host)
         Task {
             let shares = await ShareEnumerator.enumerate(host: server.host)

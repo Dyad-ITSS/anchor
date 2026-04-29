@@ -5,10 +5,10 @@ import Network
 
 enum VPNKind: String {
     case tailscale = "Tailscale"
-    case netbird   = "NetBird"
-    case zerotier  = "ZeroTier"
+    case netbird = "NetBird"
+    case zerotier = "ZeroTier"
     case wireguard = "WireGuard (generic)"
-    case none      = "None"
+    case none = "None"
 }
 
 // MARK: - VPNDetector
@@ -97,8 +97,8 @@ enum VPNDetector {
         // 100.64.0.0  = 0x64400000
         // 100.127.255.255 = 0x647FFFFF
         // Mask /10 = 0xFFC00000
-        let network: UInt32 = 0x64400000
-        let mask: UInt32    = 0xFFC00000
+        let network: UInt32 = 0x6440_0000
+        let mask: UInt32 = 0xFFC0_0000
         return (ip & mask) == (network & mask)
     }
 
@@ -108,8 +108,8 @@ enum VPNDetector {
         let ip = bigEndianToHost(addr.s_addr)
         // 172.22.0.0  = 0xAC160000
         // Mask /15 = 0xFFFE0000
-        let network: UInt32 = 0xAC160000
-        let mask: UInt32    = 0xFFFE0000
+        let network: UInt32 = 0xAC16_0000
+        let mask: UInt32 = 0xFFFE_0000
         return (ip & mask) == (network & mask)
     }
 
@@ -118,9 +118,9 @@ enum VPNDetector {
     private static func isPrivateIP(_ addr: in_addr) -> Bool {
         let ip = bigEndianToHost(addr.s_addr)
         let ranges: [(network: UInt32, mask: UInt32)] = [
-            (0x0A000000, 0xFF000000), // 10.0.0.0/8
-            (0xAC100000, 0xFFF00000), // 172.16.0.0/12
-            (0xC0A80000, 0xFFFF0000), // 192.168.0.0/16
+            (0x0A00_0000, 0xFF00_0000), // 10.0.0.0/8
+            (0xAC10_0000, 0xFFF0_0000), // 172.16.0.0/12
+            (0xC0A8_0000, 0xFFFF_0000), // 192.168.0.0/16
         ]
         return ranges.contains { (ip & $0.mask) == ($0.network & $0.mask) }
     }
@@ -136,12 +136,12 @@ enum VPNDetector {
         task.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
         task.arguments = ["-f", "tailscaled"]
         task.standardOutput = FileHandle.nullDevice
-        task.standardError  = FileHandle.nullDevice
+        task.standardError = FileHandle.nullDevice
         return (try? task.run()) != nil && { task.waitUntilExit(); return task.terminationStatus == 0 }()
     }
 
     /// Persists the detected VPN kind to the shared App Group UserDefaults.
     private static func writeToUserDefaults(_ kind: VPNKind) {
-        UserDefaults(suiteName: "group.com.yourname.anchor")?.set(kind.rawValue, forKey: "detectedVPN")
+        UserDefaults(suiteName: "group.com.zieseniss.anchor")?.set(kind.rawValue, forKey: "detectedVPN")
     }
 }

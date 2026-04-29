@@ -1,6 +1,6 @@
+import AnchorCore
 import Foundation
 import RevenueCat
-import AnchorCore
 
 @MainActor
 final class EntitlementManager: ObservableObject {

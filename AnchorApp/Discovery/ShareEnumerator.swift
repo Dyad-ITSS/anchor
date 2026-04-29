@@ -3,7 +3,6 @@ import Foundation
 /// Enumerates SMB shares and resolves server names via `smbutil`.
 /// Works on unsigned dev builds; fails gracefully in a signed sandbox (returns []/nil).
 enum ShareEnumerator {
-
     /// Returns the NetBIOS/SMB server name for an IP (e.g. "MIKEAI").
     /// Used to show a friendly name for servers not advertising via Bonjour.
     static func serverName(for ip: String) async -> String? {
@@ -71,12 +70,12 @@ enum ShareEnumerator {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             return parse(String(data: data, encoding: .utf8) ?? "")
         } catch {
-            return []  // sandboxed — no subprocess access
+            return [] // sandboxed — no subprocess access
         }
     }
 
-    // Parse smbutil view output: "ShareName    Disk    Comments"
-    // Name may contain spaces; type is always the last all-caps word before whitespace.
+    /// Parse smbutil view output: "ShareName    Disk    Comments"
+    /// Name may contain spaces; type is always the last all-caps word before whitespace.
     private static func parse(_ output: String) -> [String] {
         let hidden = Set(["ADMIN$", "C$", "D$", "E$", "F$", "IPC$", "PRINT$", "print$"])
         // Regex: capture name (possibly with spaces) then 2+ spaces then "Disk"

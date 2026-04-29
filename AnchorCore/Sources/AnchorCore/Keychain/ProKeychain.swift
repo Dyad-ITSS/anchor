@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 public enum ProKeychain {
-    private static let service = "com.yourname.anchor.pro"
+    private static let service = "com.zieseniss.anchor.pro"
     private static let account = "entitlement"
 
     /// Returns true if a Pro entitlement token is stored in Keychain.
@@ -18,9 +18,9 @@ public enum ProKeychain {
             kSecAttrService: service,
             kSecAttrAccount: account,
             kSecValueData: data,
-            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
         ]
-        SecItemDelete(query as CFDictionary)   // delete any existing item first
+        SecItemDelete(query as CFDictionary) // delete any existing item first
         SecItemAdd(query as CFDictionary, nil)
     }
 
@@ -29,7 +29,7 @@ public enum ProKeychain {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
-            kSecAttrAccount: account
+            kSecAttrAccount: account,
         ]
         SecItemDelete(query as CFDictionary)
     }
@@ -40,7 +40,7 @@ public enum ProKeychain {
             kSecAttrService: service,
             kSecAttrAccount: account,
             kSecReturnData: true,
-            kSecMatchLimit: kSecMatchLimitOne
+            kSecMatchLimit: kSecMatchLimitOne,
         ]
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -49,5 +49,7 @@ public enum ProKeychain {
     }
 
     /// For tests only — clears the Keychain entry.
-    public static func clearForTesting() { lock() }
+    public static func clearForTesting() {
+        lock()
+    }
 }
