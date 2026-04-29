@@ -5,7 +5,7 @@ import ServiceManagement
 final class HelperManager: ObservableObject {
     static let shared = HelperManager()
 
-    private let service = SMAppService.loginItem(identifier: "com.zieseniss.anchor.AnchorHelper")
+    private let service = SMAppService.loginItem(identifier: "com.dyad-itss.anchor.AnchorHelper")
     private var helperProcess: Process?
 
     @Published private(set) var isRegistered: Bool = false

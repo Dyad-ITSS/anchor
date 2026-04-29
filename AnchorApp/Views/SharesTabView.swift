@@ -15,7 +15,7 @@ struct SharesTabView: View {
     @State private var notificationToken: NSObjectProtocol? = nil
 
     private var detectedVPN: String? {
-        let v = UserDefaults(suiteName: "group.com.zieseniss.anchor")?.string(forKey: "detectedVPN") ?? "None"
+        let v = UserDefaults(suiteName: "group.com.dyad-itss.anchor")?.string(forKey: "detectedVPN") ?? "None"
         return v == "None" ? nil : v
     }
 

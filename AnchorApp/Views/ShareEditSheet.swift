@@ -89,7 +89,7 @@ struct ShareEditSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     private var detectedVPN: String? {
-        UserDefaults(suiteName: "group.com.zieseniss.anchor")?.string(forKey: "detectedVPN")
+        UserDefaults(suiteName: "group.com.dyad-itss.anchor")?.string(forKey: "detectedVPN")
     }
 
     init(share: Share?,

@@ -2,10 +2,10 @@ import Foundation
 
 public enum MountNotifications {
     /// Posted by AnchorHelper when any share's MountState changes.
-    public static let stateChanged = "com.zieseniss.anchor.mountStateChanged"
+    public static let stateChanged = "com.dyad-itss.anchor.mountStateChanged"
 
     /// Posted by AnchorApp when config is updated (signals helper to reload).
-    public static let configUpdated = "com.zieseniss.anchor.configUpdated"
+    public static let configUpdated = "com.dyad-itss.anchor.configUpdated"
 
     // MARK: - Posting (helper side)
 

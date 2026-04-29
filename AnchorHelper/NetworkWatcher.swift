@@ -4,7 +4,7 @@ import Network
 /// Emits a value whenever the network path changes.
 final class NetworkWatcher {
     private let monitor = NWPathMonitor()
-    private let queue = DispatchQueue(label: "com.zieseniss.anchor.networkwatcher")
+    private let queue = DispatchQueue(label: "com.dyad-itss.anchor.networkwatcher")
 
     var pathUpdates: AsyncStream<NWPath> {
         AsyncStream { continuation in

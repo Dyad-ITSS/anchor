@@ -142,6 +142,6 @@ enum VPNDetector {
 
     /// Persists the detected VPN kind to the shared App Group UserDefaults.
     private static func writeToUserDefaults(_ kind: VPNKind) {
-        UserDefaults(suiteName: "group.com.zieseniss.anchor")?.set(kind.rawValue, forKey: "detectedVPN")
+        UserDefaults(suiteName: "group.com.dyad-itss.anchor")?.set(kind.rawValue, forKey: "detectedVPN")
     }
 }

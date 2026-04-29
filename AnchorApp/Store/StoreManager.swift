@@ -4,7 +4,7 @@ import StoreKit
 @MainActor
 final class StoreManager: ObservableObject {
     static let shared = StoreManager()
-    static let proProductID = "com.zieseniss.anchor.pro"
+    static let proProductID = "com.dyad-itss.anchor.pro"
 
     @Published private(set) var proProduct: Product?
     @Published private(set) var isPurchasing = false

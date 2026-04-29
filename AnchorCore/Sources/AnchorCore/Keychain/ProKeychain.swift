@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 public enum ProKeychain {
-    private static let service = "com.zieseniss.anchor.pro"
+    private static let service = "com.dyad-itss.anchor.pro"
     private static let account = "entitlement"
 
     /// Returns true if a Pro entitlement token is stored in Keychain.

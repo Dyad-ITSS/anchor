@@ -40,16 +40,16 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
         com.apple.security.files.user-selected.read-write: true
-        com.apple.application-identifier: $(AppIdentifierPrefix)com.zieseniss.anchor
+        com.apple.application-identifier: $(AppIdentifierPrefix)com.dyad-itss.anchor
         com.apple.security.application-groups:
-          - group.com.zieseniss.anchor
+          - group.com.dyad-itss.anchor
     dependencies:
       - package: AnchorCore
       - package: RevenueCat
         product: RevenueCat
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.zieseniss.anchor
+        PRODUCT_BUNDLE_IDENTIFIER: com.dyad-itss.anchor
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
 
@@ -70,14 +70,14 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
-        com.apple.application-identifier: $(AppIdentifierPrefix)com.zieseniss.anchor.AnchorHelper
+        com.apple.application-identifier: $(AppIdentifierPrefix)com.dyad-itss.anchor.AnchorHelper
         com.apple.security.application-groups:
-          - group.com.zieseniss.anchor
+          - group.com.dyad-itss.anchor
     dependencies:
       - package: AnchorCore
       - sdk: NetFS.framework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.zieseniss.anchor.AnchorHelper
+        PRODUCT_BUNDLE_IDENTIFIER: com.dyad-itss.anchor.AnchorHelper
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
