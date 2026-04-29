@@ -8,10 +8,8 @@ final class MenuBarController {
     private var notificationObserver: NSObjectProtocol?
 
     init() {
-        loadConfig()
-        observeStateChanges()
-        updateIcon()
-        buildMenu()
+        loadConfig()          // synchronous: config + initial states + menu + icon
+        observeStateChanges() // registers distributed notification observer
         // Use explicit click handler — more reliable than statusItem.menu on unsigned builds
         statusItem.button?.action = #selector(statusButtonClicked(_:))
         statusItem.button?.target = self
@@ -75,21 +73,18 @@ final class MenuBarController {
     }
 
     private func loadConfig() {
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            let store = ConfigStore()
-            self.config = (try? await store.load()) ?? AnchorConfig()
-            // Seed initial states from the filesystem — don't wait for helper notifications,
-            // which may have fired before our observer was registered.
-            for share in self.config.activeShares where self.shareStates[share.id] == nil {
-                let path = "/Volumes/\(share.shareName)"
-                if self.isMountPoint(path) {
-                    self.shareStates[share.id] = .mounted
-                }
+        // loadSync avoids the actor-hop timing issues that cause config to
+        // arrive after the menu is first built.
+        config = ConfigStore().loadSync()
+        // Seed initial mount states directly from the filesystem so the menu
+        // shows the correct dot immediately without waiting for helper notifications.
+        for share in config.activeShares where shareStates[share.id] == nil {
+            if isMountPoint("/Volumes/\(share.shareName)") {
+                shareStates[share.id] = .mounted
             }
-            self.buildMenu()
-            self.updateIcon()
         }
+        buildMenu()
+        updateIcon()
     }
 
     /// Returns true if path is a mount point (different device than its parent).
