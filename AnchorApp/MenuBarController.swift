@@ -73,11 +73,7 @@ final class MenuBarController {
     }
 
     private func loadConfig() {
-        // loadSync avoids the actor-hop timing issues that cause config to
-        // arrive after the menu is first built.
         config = ConfigStore().loadSync()
-        // Seed initial mount states directly from the filesystem so the menu
-        // shows the correct dot immediately without waiting for helper notifications.
         for share in config.activeShares where shareStates[share.id] == nil {
             if isMountPoint("/Volumes/\(share.shareName)") {
                 shareStates[share.id] = .mounted
