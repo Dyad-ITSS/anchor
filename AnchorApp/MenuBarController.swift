@@ -56,10 +56,11 @@ final class MenuBarController {
             let event = mountEvents[share.id]
             let state = event?.state ?? .unmounted
             let item = NSMenuItem()
-            item.attributedTitle = shareTitle(share, event: event, state: state)
             item.representedObject = share
             item.action = state == .mounted ? #selector(openShare(_:)) : #selector(reconnectAll)
             item.target = self
+            // Custom view pins latency to the actual trailing edge, bypassing NSMenu's reserved shortcut column
+            item.view = ShareMenuItemView(share: share, event: event, state: state)
             menu.addItem(item)
         }
 
@@ -77,13 +78,10 @@ final class MenuBarController {
         reconnect.target = self
         menu.addItem(reconnect)
 
-        let settings = NSMenuItem(title: "Open Anchor Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        let settings = NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
 
-        menu.addItem(.separator())
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        menu.addItem(NSMenuItem(title: "Anchor \(version)", action: nil, keyEquivalent: ""))
         menu.addItem(.separator())
 
         let quit = NSMenuItem(title: "Quit Anchor", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -91,40 +89,7 @@ final class MenuBarController {
         statusItem.menu = menu
     }
 
-    private func shareTitle(_ share: Share, event: MountEvent?, state: MountState) -> NSAttributedString {
-        // Dot color
-        let dotColor: NSColor
-        switch state {
-        case .mounted:             dotColor = .systemGreen
-        case .mounting:            dotColor = .systemYellow
-        case .unreachable, .error: dotColor = .systemRed
-        case .unmounted:           dotColor = NSColor.tertiaryLabelColor
-        }
-
-        let result = NSMutableAttributedString(string: "● ", attributes: [.foregroundColor: dotColor])
-
-        // Name — strikethrough on unreachable
-        var nameAttrs: [NSAttributedString.Key: Any] = [.foregroundColor: NSColor.labelColor]
-        if state == .unreachable || state == .error {
-            nameAttrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
-            nameAttrs[.foregroundColor] = NSColor.secondaryLabelColor
-        }
-        result.append(NSAttributedString(string: share.displayName, attributes: nameAttrs))
-
-        // Latency / route suffix for mounted shares
-        if state == .mounted, let event {
-            let isVPN = event.mountedHost == share.fallbackHost && share.fallbackHost != nil
-            let route = isVPN ? "VPN" : "LAN"
-            var suffix = "  \(route)"
-            if let ms = event.latencyMs, ms > 0 { suffix += " · \(ms)ms" }
-            result.append(NSAttributedString(string: suffix, attributes: [
-                .foregroundColor: isVPN ? NSColor.systemBlue : NSColor.systemGreen,
-                .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-            ]))
-        }
-
-        return result
-    }
+    // MARK: - Actions
 
     // MARK: - Actions
 
@@ -164,5 +129,99 @@ final class MenuBarController {
             self?.buildMenu()
             self?.updateIcon()
         }
+    }
+}
+
+// MARK: - ShareMenuItemView
+
+private final class ShareMenuItemView: NSView {
+    private let dotLabel = NSTextField(labelWithString: "")
+    private let nameLabel = NSTextField(labelWithString: "")
+    private let latencyLabel = NSTextField(labelWithString: "")
+    private let dotColor: NSColor
+    private let latencyColor: NSColor
+
+    init(share: Share, event: MountEvent?, state: MountState) {
+        switch state {
+        case .mounted:             dotColor = .systemGreen
+        case .mounting:            dotColor = .systemYellow
+        case .unreachable, .error: dotColor = .systemRed
+        case .unmounted:           dotColor = .tertiaryLabelColor
+        }
+
+        let isVPN = state == .mounted &&
+            event?.mountedHost == share.fallbackHost && share.fallbackHost != nil
+        latencyColor = isVPN ? .systemBlue : .systemGreen
+
+        super.init(frame: NSRect(x: 0, y: 0, width: 300, height: 20))
+
+        for field in [dotLabel, nameLabel, latencyLabel] {
+            field.isEditable = false
+            field.isBordered = false
+            field.backgroundColor = .clear
+            field.translatesAutoresizingMaskIntoConstraints = false
+            addSubview(field)
+        }
+
+        dotLabel.font = .menuFont(ofSize: 0)
+        dotLabel.textColor = dotColor
+        dotLabel.stringValue = "●"
+
+        nameLabel.font = .menuFont(ofSize: 0)
+        nameLabel.textColor = .labelColor
+        if state == .unreachable || state == .error {
+            let s = NSMutableAttributedString(string: share.displayName,
+                attributes: [.font: NSFont.menuFont(ofSize: 0),
+                             .foregroundColor: NSColor.secondaryLabelColor,
+                             .strikethroughStyle: NSUnderlineStyle.single.rawValue])
+            nameLabel.attributedStringValue = s
+        } else {
+            nameLabel.stringValue = share.displayName
+        }
+
+        latencyLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        latencyLabel.textColor = latencyColor
+        latencyLabel.alignment = .right
+        if state == .mounted, let event {
+            let route = isVPN ? "VPN" : "LAN"
+            var label = route
+            if let ms = event.latencyMs, ms > 0 { label += " · \(ms)ms" }
+            latencyLabel.stringValue = label
+        }
+
+        NSLayoutConstraint.activate([
+            dotLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
+            dotLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+
+            nameLabel.leadingAnchor.constraint(equalTo: dotLabel.trailingAnchor, constant: 6),
+            nameLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: latencyLabel.leadingAnchor, constant: -8),
+
+            latencyLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
+            latencyLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            latencyLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 60),
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let highlighted = enclosingMenuItem?.isHighlighted == true
+        if highlighted {
+            NSColor.selectedMenuItemColor.setFill()
+            bounds.fill()
+            dotLabel.textColor = .selectedMenuItemTextColor
+            nameLabel.textColor = .selectedMenuItemTextColor
+            latencyLabel.textColor = .selectedMenuItemTextColor
+        } else {
+            dotLabel.textColor = dotColor
+            if nameLabel.attributedStringValue.length > 0 {
+                nameLabel.textColor = .secondaryLabelColor
+            } else {
+                nameLabel.textColor = .labelColor
+            }
+            latencyLabel.textColor = latencyColor
+        }
+        super.draw(dirtyRect)
     }
 }
