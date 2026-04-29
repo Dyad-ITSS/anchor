@@ -31,23 +31,17 @@ final class MenuBarController {
     private func updateIcon() {
         let activeShares = config.activeShares
         let allMounted = !activeShares.isEmpty && activeShares.allSatisfy { shareStates[$0.id] == .mounted }
-        let anyMounted = activeShares.contains { shareStates[$0.id] == .mounted }
 
-        let image = NSImage(systemSymbolName: "externaldrive.connected.to.line.below", accessibilityDescription: "Anchor")
+        // Use fill variant when everything is mounted, outline otherwise.
+        // Never set contentTintColor — template icons auto-adapt (white/dark mode)
+        // and tinting breaks visibility on the pressed dark button background.
+        let symbolName = allMounted
+            ? "externaldrive.connected.to.line.below.fill"
+            : "externaldrive.connected.to.line.below"
+        let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Anchor")
         image?.isTemplate = true
         statusItem.button?.image = image
-
-        // nil tint = system adapts automatically (white on dark, black on light)
-        // coloured tint = status override
-        if activeShares.isEmpty {
-            statusItem.button?.contentTintColor = nil
-        } else if allMounted {
-            statusItem.button?.contentTintColor = .controlAccentColor
-        } else if anyMounted {
-            statusItem.button?.contentTintColor = .systemYellow
-        } else {
-            statusItem.button?.contentTintColor = .systemRed
-        }
+        statusItem.button?.contentTintColor = nil
     }
 
     func buildMenu() {
@@ -85,9 +79,26 @@ final class MenuBarController {
             guard let self else { return }
             let store = ConfigStore()
             self.config = (try? await store.load()) ?? AnchorConfig()
+            // Seed initial states from the filesystem — don't wait for helper notifications,
+            // which may have fired before our observer was registered.
+            for share in self.config.activeShares where self.shareStates[share.id] == nil {
+                let path = "/Volumes/\(share.shareName)"
+                if self.isMountPoint(path) {
+                    self.shareStates[share.id] = .mounted
+                }
+            }
             self.buildMenu()
             self.updateIcon()
         }
+    }
+
+    /// Returns true if path is a mount point (different device than its parent).
+    private func isMountPoint(_ path: String) -> Bool {
+        let parent = (path as NSString).deletingLastPathComponent
+        guard let dev  = (try? FileManager.default.attributesOfFileSystem(forPath: path))?[.systemNumber] as? Int,
+              let pDev = (try? FileManager.default.attributesOfFileSystem(forPath: parent))?[.systemNumber] as? Int
+        else { return false }
+        return dev != pDev
     }
 
     private func observeStateChanges() {
