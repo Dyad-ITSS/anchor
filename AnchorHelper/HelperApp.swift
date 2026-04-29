@@ -12,8 +12,8 @@ final class HelperApp {
     private var isPro: Bool = false
     private var previousStates: [UUID: MountState] = [:]
 
-    init() throws {
-        configStore = try ConfigStore()  // Production init — uses App Group container
+    init() {
+        configStore = ConfigStore()
     }
 
     func run() async {

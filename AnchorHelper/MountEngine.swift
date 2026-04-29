@@ -43,6 +43,15 @@ final class MountEngine {
             }
 
         case .unmounted, .unreachable, .error:
+            // Pre-flight: detect shares already mounted by another agent (e.g. launchd script).
+            // Use st_dev comparison — most reliable mount-point test.
+            if isMountPoint("/Volumes/\(share.shareName)") {
+                await session.setState(.mounted, for: share.id)
+                MountNotifications.postStateChanged(
+                    MountEvent(shareID: share.id, state: .mounted, mountedHost: share.host)
+                )
+                return
+            }
             let primaryUp = await HostProbe.isReachable(share.host)
             if primaryUp {
                 await mount(share, usingHost: share.host)
@@ -98,7 +107,8 @@ final class MountEngine {
             }
         }
 
-        let newState: MountState = (result == 0) ? .mounted : .error
+        // EEXIST (17): volume already mounted at that path — treat as success.
+        let newState: MountState = (result == 0 || result == EEXIST) ? .mounted : .error
         await session.setState(newState, for: share.id)
         MountNotifications.postStateChanged(
             MountEvent(
@@ -107,6 +117,18 @@ final class MountEngine {
                 mountedHost: newState == .mounted ? host : nil
             )
         )
+    }
+
+    // MARK: - Mount point detection
+
+    /// Returns true if `path` is a mount point (different device ID from its parent).
+    /// Uses FileManager to avoid the stat()/stat struct name collision in Swift.
+    private func isMountPoint(_ path: String) -> Bool {
+        let parent = (path as NSString).deletingLastPathComponent
+        guard let dev  = (try? FileManager.default.attributesOfFileSystem(forPath: path))?[.systemNumber] as? Int,
+              let pDev = (try? FileManager.default.attributesOfFileSystem(forPath: parent))?[.systemNumber] as? Int
+        else { return false }
+        return dev != pDev
     }
 
     // MARK: - Unmount via diskutil

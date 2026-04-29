@@ -5,6 +5,7 @@ import AnchorCore
 struct AboutTabView: View {
     @EnvironmentObject var entitlement: EntitlementManager
     @EnvironmentObject var store: StoreManager
+    @ObservedObject private var helperManager = HelperManager.shared
 
     private let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
 
@@ -88,7 +89,26 @@ struct AboutTabView: View {
                 .padding(.top, 4)
             }
 
-            Link("View on GitHub", destination: URL(string: "https://github.com")!)
+            Divider().padding(.horizontal, 40)
+
+            Toggle(isOn: Binding(
+                get: { helperManager.isRegistered },
+                set: { on in
+                    if on { helperManager.registerIfNeeded() }
+                    else  { helperManager.unregister() }
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Launch at Login")
+                        .font(.callout)
+                    Text("Start Anchor automatically when you log in")
+                        .font(.caption).foregroundColor(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .padding(.horizontal, 20)
+
+            Link("View on GitHub", destination: URL(string: "https://github.com/Dyad-ITSS/anchor")!)
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.top, 4)
