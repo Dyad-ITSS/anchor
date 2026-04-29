@@ -95,7 +95,10 @@ final class MenuBarController {
             string: "● ",
             attributes: [.foregroundColor: dotColor]
         )
-        result.append(NSAttributedString(string: name))
+        result.append(NSAttributedString(
+            string: name,
+            attributes: [.foregroundColor: NSColor.labelColor]
+        ))
         return result
     }
 
