@@ -48,6 +48,9 @@ final class MenuBarController {
             let state = shareStates[share.id] ?? .unmounted
             let item = NSMenuItem()
             item.attributedTitle = dotTitle(share.displayName, state: state)
+            item.representedObject = share
+            item.action = #selector(openShare(_:))
+            item.target = self
             menu.addItem(item)
         }
         if !config.activeShares.isEmpty { menu.addItem(.separator()) }
@@ -64,6 +67,12 @@ final class MenuBarController {
         let quit = NSMenuItem(title: "Quit Anchor", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
         statusItem.menu = menu
+    }
+
+    @objc private func openShare(_ sender: NSMenuItem) {
+        guard let share = sender.representedObject as? Share else { return }
+        let path = "/Volumes/\(share.shareName)"
+        NSWorkspace.shared.open(URL(fileURLWithPath: path))
     }
 
     @objc private func reconnectAll() { MountNotifications.postConfigUpdated() }
